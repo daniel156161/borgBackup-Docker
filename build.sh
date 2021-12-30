@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_IMAGE_NAME="borgbackup-ssh"
+DOCKER_IMAGE_NAME="daniel156161/borgbackup-ssh"
 DOCKER_CONTAINER_NAME="borgbackup"
 
 run_docker_container() {
@@ -14,9 +14,13 @@ run_docker_container() {
 }
 
 build_docker_image() {
+  TAG="$1"
+
   echo "Building..."
-  docker build -t "$DOCKER_IMAGE_NAME" .
+  docker build -t "$DOCKER_IMAGE_NAME:$TAG" .
 }
 
-build_docker_image
+build_docker_image "latest"
 run_docker_container
+
+#build_docker_image "1.1.17"

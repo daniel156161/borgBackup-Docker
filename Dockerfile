@@ -14,6 +14,7 @@ COPY entrypoint.sh /
 RUN apk update ; apk upgrade
 RUN apk add --no-cache sudo bash tzdata openssh-server openrc \
     borgbackup
+RUN rm -rf /var/cache/apk/*
 
 # Setup SSH-Server
 RUN sed -ie 's/#Port 22/Port 22/g' /etc/ssh/sshd_config
