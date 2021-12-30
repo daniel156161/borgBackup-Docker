@@ -9,7 +9,7 @@ run_docker_container() {
     -e UID=$(id -u) \
     -e GID=$(id -g) \
     -v "$PWD"/sshkeys:/sshkeys \
-    -v "$PWD"/backup:/backup \
+    -v "$PWD"/backups:/backups \
     "$DOCKER_IMAGE_NAME"
 }
 
