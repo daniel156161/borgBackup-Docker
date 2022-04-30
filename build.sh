@@ -22,5 +22,3 @@ build_docker_image() {
 
 build_docker_image "latest"
 run_docker_container
-
-#build_docker_image "1.1.17"
