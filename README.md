@@ -21,10 +21,18 @@ docker run -dp 3000:22 \
   -v "$PWD"/backups:/backups \
   daniel156161/borgbackup-ssh:tagname
 ```
+## Maintain Borg Repo
+Use ENV MAINTENANCE_ENABLE="true" and bind your contab file into /crontab.txt and bind your script to / too its easier with the Crontab file
+
+## Logs
+Create New Volumen into /logs if you like to log anything
 
 ## borgbackup Version into Tags
 
-- **lastest** : borgBackup with Version 1.1.17
-- **1.1.17** : borgBackup with Version 1.1.17
+| TAG | Borg Backup Version | Alpine Version |
+| ----------- | ----------- |  ----------- |
+| lastest | 1.2.1                         | latest                 |
+| 1.2.0    | 1.2.0                         | 3.16                   |
+| 1.1.17  | 1.1.17                       | not know any more |
 
 more will be come
