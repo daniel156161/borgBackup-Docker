@@ -20,7 +20,19 @@ build_docker_image() {
   docker build -t "$DOCKER_IMAGE_NAME:$TAG" .
 }
 
-build_docker_image "latest"
-run_docker_container
-
-#build_docker_image "1.1.17"
+case "$1" in
+  run)
+    run_docker_container
+    ;;
+  build)
+    build_docker_image "latest"
+    ;;
+  upload)
+    build_docker_image "latest"
+    docker push "$DOCKER_IMAGE_NAME:latest"
+    ;;
+  *)
+    echo "Usage: $0 {run|build}"
+    exit 1
+    ;;
+esac
