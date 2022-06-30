@@ -1,12 +1,14 @@
-FROM alpine:latest
+FROM alpine:edge
 
 ENV USER=borg
 ENV UID=1000
 ENV GID=1000
+ENV MAINTENANCE_ENABLE="false"
 
 # Add Folders and Shell Scripts
 RUN mkdir "/.ssh"
 VOLUME ["/backups"]
+VOLUME ["/logs"]
 COPY motd.txt /etc/motd
 COPY entrypoint.sh /
 

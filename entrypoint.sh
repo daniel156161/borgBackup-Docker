@@ -1,5 +1,5 @@
 #!/bin/sh
-DOCKER_IMAGE_VERSION="1.0.5"
+DOCKER_IMAGE_VERSION="1.0.6"
 
 sepurator() {
   echo "==============================================================================="
@@ -63,6 +63,18 @@ if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
 fi
 
 chown -R "$USER":"$USER" "/sshkeys/host"
+
+# MAINTENANCE_ENABLE of Borg Repository
+if [ $MAINTENANCE_ENABLE != "false" ]; then
+  if [ -f "/crontab.txt" ]; then
+    /usr/bin/crontab "/crontab.txt"
+    /usr/sbin/crond -b
+    echo "* Crontab loaded successfully"
+  else
+    echo "* Can not find /crontab.txt"
+  fi
+  sepurator
+fi
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
