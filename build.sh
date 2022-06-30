@@ -25,11 +25,11 @@ case "$1" in
     run_docker_container
     ;;
   build)
-    build_docker_image "latest"
+    build_docker_image "1.2.0"
     ;;
   upload)
-    build_docker_image "latest"
-    docker push "$DOCKER_IMAGE_NAME:latest"
+    build_docker_image "1.2.0"
+    docker push "$DOCKER_IMAGE_NAME:1.2.0"
     ;;
   *)
     echo "Usage: $0 {run|build}"
