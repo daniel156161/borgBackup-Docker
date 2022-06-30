@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:latest
 
 ENV USER=borg
 ENV UID=1000
