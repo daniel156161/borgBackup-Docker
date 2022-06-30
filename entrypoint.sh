@@ -1,5 +1,5 @@
 #!/bin/sh
-DOCKER_IMAGE_VERSION="1.0.3"
+DOCKER_IMAGE_VERSION="1.0.5"
 
 sepurator() {
   echo "==============================================================================="
