@@ -2,15 +2,19 @@
 
 DOCKER_IMAGE_NAME="daniel156161/borgbackup-ssh"
 DOCKER_CONTAINER_NAME="borgbackup"
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 run_docker_container() {
   echo "Running..."
   docker run -dp 3000:22 \
     -e UID=$(id -u) \
     -e GID=$(id -g) \
+    -e MAINTENANCE_ENABLE="true" \
+    -v "$PWD"/crontab.txt:/crontab.txt \
+    -v "$PWD"/maintain_repo.sh:/maintain_repo.sh \
     -v "$PWD"/sshkeys:/sshkeys \
     -v "$PWD"/backups:/backups \
-    "$DOCKER_IMAGE_NAME"
+    "$DOCKER_IMAGE_NAME":"$GIT_BRANCH"
 }
 
 build_docker_image() {
@@ -25,14 +29,18 @@ case "$1" in
     run_docker_container
     ;;
   build)
-    build_docker_image "dev"
+    build_docker_image "$GIT_BRANCH"
     ;;
   upload)
-    build_docker_image "dev"
-    docker push "$DOCKER_IMAGE_NAME:dev"
+    build_docker_image "$GIT_BRANCH"
+    docker push "$DOCKER_IMAGE_NAME:$GIT_BRANCH"
+    ;;
+  test)
+    build_docker_image "$GIT_BRANCH"
+    run_docker_container
     ;;
   *)
-    echo "Usage: $0 {run|build}"
+    echo "Usage: $0 {run|build|test|upload}"
     exit 1
     ;;
 esac
