@@ -24,6 +24,10 @@ build_docker_image() {
   docker build -t "$DOCKER_IMAGE_NAME:$TAG" .
 }
 
+if [ "$GIT_BRANCH" == "main" ]; then
+  GIT_BRANCH="latest"
+fi
+
 case "$1" in
   run)
     run_docker_container
