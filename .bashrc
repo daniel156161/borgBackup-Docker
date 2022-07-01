@@ -88,7 +88,9 @@ function print_container_info {
   echo "BorgServer powered by $BORG_VERSION - Image Hostname: $HOSTNAME | Image Version: $DOCKER_IMAGE_VERSION"
   sepurator
 }
-
+##############################################################################################################################
+# Run Code
+##############################################################################################################################
 find_borg_repo backups/
 export BORG_REPO="${repo_list[selected_repo]}"
 if [ ! -z "$BORG_REPO" ]; then
