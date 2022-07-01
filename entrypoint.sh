@@ -18,8 +18,8 @@ function print_container_info {
 
 function print_user_info {
   sepurator
-  echo "* USER: $USER ID: $UID"
-  echo "* GROUP: $USER GID: $GID"
+  echo "* USER:  $USER - ID:  $UID"
+  echo "* GROUP: $USER - GID: $GID"
 }
 
 function add_borg_user {
@@ -113,9 +113,9 @@ function maintenance_enable {
     if [ -f "/crontab.txt" ]; then
       /usr/bin/crontab "/crontab.txt"
       /usr/sbin/crond -b
-      echo "* Crontab loaded successfully"
+      echo "- Crontab loaded successfully"
     else
-      echo "* Can not find /crontab.txt"
+      echo "- Can not find /crontab.txt"
     fi
     sepurator
   fi
