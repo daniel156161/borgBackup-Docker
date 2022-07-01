@@ -26,6 +26,7 @@ function add_borg_user {
   if ! id "borg" &>/dev/null; then
     sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
     adduser \
+    -s /bin/bash \
     --disabled-password \
     --gecos "" \
     --home "/" \

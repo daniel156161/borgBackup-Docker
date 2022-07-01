@@ -15,9 +15,12 @@ VOLUME ["/sshkeys/host"]
 COPY motd.txt /etc/motd
 COPY entrypoint.sh /
 
+COPY .bash_profile /root/
+COPY .bashrc /root/
+
 # Install packages
 RUN apk update ; apk upgrade
-RUN apk add --no-cache sudo bash tzdata openssh-server openrc \
+RUN apk add --no-cache sudo bash bash-completion tzdata openssh-server openrc neofetch \
     borgbackup
 RUN rm -rf /var/cache/apk/*
 
