@@ -1,5 +1,3 @@
 sshkeys/clients/
 sshkeys/host/
-crontab.txt
-maintain_repo.sh
 backups/

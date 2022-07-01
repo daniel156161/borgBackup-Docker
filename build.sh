@@ -12,8 +12,8 @@ run_docker_container() {
     -e MAINTENANCE_ENABLE="true" \
     -e INTERACTIVE_MODE="true" \
     -e TZ="Europe/Vienna" \
-    -v "$PWD"/crontab.txt:/crontab.txt \
-    -v "$PWD"/maintain_repo.sh:/maintain_repo.sh \
+    -v "$PWD"/Testing/crontab.txt:/crontab.txt \
+    -v "$PWD"/Testing/test_script.sh:/test_script.sh \
     -v "$PWD"/sshkeys/clients:/sshkeys/clients \
     -v "$PWD"/backups:/backups \
     "$DOCKER_IMAGE_NAME":"$GIT_BRANCH"
