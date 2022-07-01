@@ -91,11 +91,13 @@ function print_container_info {
 ##############################################################################################################################
 # Run Code
 ##############################################################################################################################
-find_borg_repo backups/
-export BORG_REPO="${repo_list[selected_repo]}"
-if [ ! -z "$BORG_REPO" ]; then
-  ask_for_repo_password
-  clear
+if [ "$INTERACTIVE_MODE" != "false" ]; then
+  find_borg_repo backups/
+  export BORG_REPO="${repo_list[selected_repo]}"
+  if [ ! -z "$BORG_REPO" ]; then
+    ask_for_repo_password
+    clear
+  fi
 fi
 
 print_container_info
