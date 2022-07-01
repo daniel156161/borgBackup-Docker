@@ -26,7 +26,6 @@ function find_borg_repo {
   if [ -z "$repo_list" ]; then
     sepurator
     echo "* Can not find borg repository"
-    sepurator
   else
     sepurator
     echo "* Select borg repository"
