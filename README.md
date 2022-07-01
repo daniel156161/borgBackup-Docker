@@ -1,16 +1,4 @@
-## SSH Keys
-
-they are into the Container Folder /sshkeys
-
-- **Client Keys** /sshkeys/clients:  add the Public Key with the Hostname.pub
-- **Server Keys** /sshkeys/host:  will be here after Server generate them
-
-## BorgBackup Repo
-
-borgBackup Repo can be into any Folder you like but i put it into /backups :3
-
 ## Example docker code
-
 run this docker command to get up and running:
 
 ```
@@ -21,21 +9,41 @@ docker run -dp 3000:22 \
   -v "$PWD"/backups:/backups \
   daniel156161/borgbackup-ssh:tagname
 ```
-## Maintain Borg Repo - Only in lastest
+
+## Use after setup
+```
+export BORG_REPO='ssh://borg@localhost:3000/backups' 
+borg init -e none
+# any borg command you like
+```
+
+
+## SSH Keys
+they are into the Container Folder /sshkeys
+
+- **Client Keys** /sshkeys/clients:  add the Public Key with the Hostname.pub
+- **Server Keys** /sshkeys/host:  will be here after Server generate them
+
+
+## BorgBackup Repo
+
+borgBackup Repo can be into any Folder you like but i put it into /backups :3
+
+## Maintain Borg Repo - not into 1.1.17
 Use ENV MAINTENANCE_ENABLE="true" and bind your contab file into /crontab.txt and bind your script to / too its easier with the Crontab file
 
-## Logs - Only in lastest
-Create New Volumen into /logs if you like to log anything
+## Logs - not into 1.1.17
+Create New Volumen into /logs if you like to log anything or get the logs
 
-## Set Timezone - Only in lastest
+## Set Timezone - not into 1.1.17
 Use ENV TZ="Your time zone" if not set will use UTC
 
 ## borgbackup Version into Tags
 
 | TAG | Borg Backup Version | Alpine Version |
 | ----------- | ----------- |  ----------- |
-| lastest | 1.2.1                         | latest                 |
-| 1.2.0    | 1.2.0                         | 3.16                   |
+| lastest | 1.2.1                         | edge                 |
+| stable    | 1.2.0                         | latest                  |
 | 1.1.17  | 1.1.17                       | not know any more |
 
 more will be come
