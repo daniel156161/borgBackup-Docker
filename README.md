@@ -1,9 +1,22 @@
+## Example docker code
+run this docker command to get up and running:
+
+```
+docker run -dp 3000:22 \
+  -e UID=$(id -u) \
+  -e GID=$(id -g) \
+  -v "$PWD"/sshkeys:/sshkeys \
+  -v "$PWD"/backups:/backups \
+  daniel156161/borgbackup-ssh:tagname
+```
+
 ## Use after setup
 ```
 export BORG_REPO='ssh://borg@localhost:3000/backups' 
 borg init -e none
 # any borg command you like
 ```
+
 
 ## SSH Keys
 they are into the Container Folder /sshkeys
@@ -16,19 +29,6 @@ they are into the Container Folder /sshkeys
 
 borgBackup Repo can be into any Folder you like but i put it into /backups :3
 
-
-## Example docker code
-
-run this docker command to get up and running:
-
-```
-docker run -dp 3000:22 \
-  -e UID=$(id -u) \
-  -e GID=$(id -g) \
-  -v "$PWD"/sshkeys:/sshkeys \
-  -v "$PWD"/backups:/backups \
-  daniel156161/borgbackup-ssh:tagname
-```
 ## Maintain Borg Repo - not into 1.1.17
 Use ENV MAINTENANCE_ENABLE="true" and bind your contab file into /crontab.txt and bind your script to / too its easier with the Crontab file
 
