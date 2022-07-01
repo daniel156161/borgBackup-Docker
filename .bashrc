@@ -14,16 +14,19 @@ export PS1="\[\e[31m\][\[\e[m\]\[\e[38;5;172m\]\u\[\e[m\]@\[\e[38;5;153m\]\h\[\e
 ##############################################################################################################################
 # Borg Repo finder
 ##############################################################################################################################
+source "/variables.sh"
+
 function sepurator {
-  echo "==============================================================================="
+  echo "=============================================================================================="
 }
 
 function find_borg_repo {
   repo_list=( $(find "$1" -name "index.*" -type f | rev | cut -d '/' -f "2-" | rev) )
 
   if [ -z "$repo_list" ]; then
+    sepurator
     echo "* Can not find borg repository"
-    exit 1
+    sepurator
   else
     sepurator
     echo "* Select borg repository"
@@ -61,9 +64,37 @@ function select_borg_repo {
       fi
     done
   fi
+  sepurator
+}
+
+function ask_for_repo_password {
+  if grep -q 'key' "$BORG_REPO/config"; then
+    echo "* BORG REPO has a password"
+    sepurator
+    echo "(you can leave it empty if you not like to export BORG_PASSPHRASE)"
+    read -s -p "Please enter password: " BORG_REPO_PASSWORD
+    echo ""
+    if [ "$BORG_REPO_PASSWORD" != "" ]; then
+      export BORG_PASSPHRASE="$BORG_REPO_PASSWORD"
+    fi
+  else
+    echo "* BORG REPO has no password"
+  fi
+  sepurator
+}
+
+function print_container_info {
+  sepurator
+  echo "BorgServer powered by $BORG_VERSION - Image Hostname: $HOSTNAME | Image Version: $DOCKER_IMAGE_VERSION"
+  sepurator
 }
 
 find_borg_repo backups/
 export BORG_REPO="${repo_list[selected_repo]}"
-clear
+if [ ! -z "$BORG_REPO" ]; then
+  ask_for_repo_password
+  clear
+fi
+
+print_container_info
 neofetch

@@ -14,6 +14,7 @@ VOLUME ["/sshkeys/host"]
 
 COPY motd.txt /etc/motd
 COPY entrypoint.sh /
+COPY variables.sh /
 
 COPY .bash_profile /root/
 COPY .bashrc /root/
