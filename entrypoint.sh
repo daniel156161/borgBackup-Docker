@@ -1,5 +1,5 @@
 #!/bin/sh
-DOCKER_IMAGE_VERSION="1.0.6"
+DOCKER_IMAGE_VERSION="1.0.7"
 
 sepurator() {
   echo "==============================================================================="
@@ -24,9 +24,9 @@ adduser \
   --home "/" \
   --uid "$UID" \
   "$USER"
-echo "$USER:*" | chpasswd
-addgroup -g "$GID" "$USER"
-sepurator
+echo "$USER:*" | chpasswd 2>> /logs/user.log
+addgroup -g "$GID" "$USER"  2>> /logs/user.log
+
 echo "* USER: $USER ID: $UID"
 echo "* GROUP: $USER GID: $GID"
 sepurator
@@ -65,7 +65,7 @@ fi
 chown -R "$USER":"$USER" "/sshkeys/host"
 
 # MAINTENANCE_ENABLE of Borg Repository
-if [ $MAINTENANCE_ENABLE != "false" ]; then
+if [ "$MAINTENANCE_ENABLE" != "false" ]; then
   if [ -f "/crontab.txt" ]; then
     /usr/bin/crontab "/crontab.txt"
     /usr/sbin/crond -b
@@ -76,6 +76,14 @@ if [ $MAINTENANCE_ENABLE != "false" ]; then
   sepurator
 fi
 
+if [ "$TZ" != "" ]; then
+  echo "* Setting Timezone to $TZ"
+  echo "TZ=$TZ" > /etc/environment
+else
+  echo "* Timezone not set - Use UTC Time"
+fi
+sepurator
+
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
-exec /usr/sbin/sshd -D -e "$@"
+exec /usr/sbin/sshd -D -e "$@" 2>> /logs/sshd.log

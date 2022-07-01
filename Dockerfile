@@ -4,6 +4,7 @@ ENV USER=borg
 ENV UID=1000
 ENV GID=1000
 ENV MAINTENANCE_ENABLE="false"
+ENV TZ=""
 
 # Add Folders and Shell Scripts
 RUN mkdir "/.ssh"

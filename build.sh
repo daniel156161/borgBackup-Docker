@@ -10,6 +10,7 @@ run_docker_container() {
     -e UID=$(id -u) \
     -e GID=$(id -g) \
     -e MAINTENANCE_ENABLE="true" \
+    -e TZ="Europe/Vienna" \
     -v "$PWD"/crontab.txt:/crontab.txt \
     -v "$PWD"/maintain_repo.sh:/maintain_repo.sh \
     -v "$PWD"/sshkeys:/sshkeys \
