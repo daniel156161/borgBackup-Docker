@@ -13,7 +13,7 @@ run_docker_container() {
     -e TZ="Europe/Vienna" \
     -v "$PWD"/crontab.txt:/crontab.txt \
     -v "$PWD"/maintain_repo.sh:/maintain_repo.sh \
-    -v "$PWD"/sshkeys:/sshkeys \
+    -v "$PWD"/sshkeys/clients:/sshkeys/clients \
     -v "$PWD"/backups:/backups \
     "$DOCKER_IMAGE_NAME":"$GIT_BRANCH"
 }

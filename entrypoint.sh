@@ -1,89 +1,152 @@
-#!/bin/sh
-DOCKER_IMAGE_VERSION="1.0.7"
-
-sepurator() {
+#!/bin/bash
+DOCKER_IMAGE_VERSION="1.0.8"
+BORG_VERSION=$(borg -V)
+SSH_FOLDERS=( /sshkeys/clients /sshkeys/host )
+##############################################################################################################################
+# Funktionen
+##############################################################################################################################
+function sepurator {
   echo "==============================================================================="
 }
 
-sepurator
-BORG_VERSION=$(borg -V)
-echo "* BorgServer powered by $BORG_VERSION"
-echo "* Image Hostname: $HOSTNAME"
-echo "* Image Version: $DOCKER_IMAGE_VERSION"
-sepurator
+function print_container_info {
+  sepurator
+  echo "* BorgServer powered by $BORG_VERSION"
+  echo "* Image Hostname: $HOSTNAME"
+  echo "* Image Version: $DOCKER_IMAGE_VERSION"
+}
 
-# Make authorized_keys file
-touch "/.ssh/authorized_keys"
+function print_user_info {
+  sepurator
+  echo "* USER: $USER ID: $UID"
+  echo "* GROUP: $USER GID: $GID"
+}
 
-# Add User
-sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+function add_borg_user {
+  if ! id "borg" &>/dev/null; then
+    sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+    adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/" \
+    --uid "$UID" \
+    "$USER"
+    echo "$USER:*" | chpasswd 2>> /dev/null
+    addgroup -g "$GID" "$USER"  2>> /dev/null
+  fi
+}
 
-adduser \
-  --disabled-password \
-  --gecos "" \
-  --home "/" \
-  --uid "$UID" \
-  "$USER"
-echo "$USER:*" | chpasswd 2>> /logs/user.log
-addgroup -g "$GID" "$USER"  2>> /logs/user.log
+function make_and_import_ssh_keys {
+  local create_folders="0"
+  touch "/.ssh/authorized_keys"
 
-echo "* USER: $USER ID: $UID"
-echo "* GROUP: $USER GID: $GID"
-sepurator
+  for key in ${SSH_FOLDERS[@]}; do
+    if [ ! -d "${key}" ]; then
+      mkdir -p "${key}"
+      echo "Created ${key}"
+      create_folders="1"
+    fi
+  done
 
-mkdir -p /sshkeys/clients
-mkdir -p /sshkeys/host
-chown -R "$USER":"$USER" "/sshkeys"
+  chown -R "$USER":"$USER" "/sshkeys"
 
-echo "* IMPORT SSH KEYS"
-echo ""
-# Add SSH Keys to authorized_keys
-FILES=$(ls -1 /sshkeys/clients)
-for key in $FILES; do
-  echo "-  Adding SSH-Key $key"
-  cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
-done
-echo "" >> "/.ssh/authorized_keys"
-sepurator
+  if [ $create_folders == "1" ]; then
+    sepurator
+  fi
 
-# Change Ownership of SSH-Keys
-chown -R "$USER":"$USER" "/.ssh"
-chmod 700 "/.ssh"
-chmod 600 "/.ssh/authorized_keys"
+  echo "* IMPORT SSH KEYS"
+  echo ""
 
-# Generate SSH-Keys
-if [ ! -f "/sshkeys/host/ssh_host_rsa_key" ]; then
-  ssh-keygen -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
-fi
-if [ ! -f "/sshkeys/host/ssh_host_ecdsa_key" ]; then
-  ssh-keygen -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
-fi
-if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
-  ssh-keygen -t ed25519 -b 521 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
-fi
+  FILES=$(ls -1 /sshkeys/clients)
+  for key in $FILES; do
+    echo "-  Adding SSH-Key $key"
+    cat "/sshkeys/clients/$key" > "/.ssh/authorized_keys"
+  done
+  echo "" >> "/.ssh/authorized_keys"
 
-chown -R "$USER":"$USER" "/sshkeys/host"
+  chown -R "$USER":"$USER" "/.ssh"
+  chmod 700 "/.ssh"
+  chmod 600 "/.ssh/authorized_keys"
+}
 
-# MAINTENANCE_ENABLE of Borg Repository
-if [ "$MAINTENANCE_ENABLE" != "false" ]; then
-  if [ -f "/crontab.txt" ]; then
-    /usr/bin/crontab "/crontab.txt"
-    /usr/sbin/crond -b
-    echo "* Crontab loaded successfully"
+function print_message {
+  echo ""
+  echo "- $1"
+  echo ""
+}
+
+function generate_host_sshkey {
+  local generated_keys="0"
+  echo "* GENERATE HOST SSH-KEYs"
+  # Generate SSH-Keys
+  if [ ! -f "/sshkeys/host/ssh_host_rsa_key" ]; then
+    print_message "HOST SSH-KEY RSA not found, generating..."
+    ssh-keygen -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
+    print_message "HOST SSH-KEY RSA Generated"
+    generated_keys="1"
+  fi
+  if [ ! -f "/sshkeys/host/ssh_host_ecdsa_key" ]; then
+    print_message "HOST SSH-KEY ECDSA not found, generating..."
+    ssh-keygen -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
+    print_message "HOST SSH-KEY ECDSA Generated"
+    generated_keys="1"
+  fi
+  if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
+    print_message "HOST SSH-KEY ED25519 not found, generating..."
+    ssh-keygen -t ed25519 -b 521 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
+    print_message "HOST SSH-KEY ED25519 Generated"
+    generated_keys="1"
+  fi
+
+  if [ "$generated_keys" == "0" ]; then
+    echo ""
+    echo "- HOST SSH-KEYs already exist"
+  fi
+
+  chown -R "$USER":"$USER" "/sshkeys/host"
+}
+
+function maintenance_enable {
+  if [ "$MAINTENANCE_ENABLE" != "false" ]; then
+    echo "* MAINTENANCE MODE - ENABLED"
+    echo ""
+    if [ -f "/crontab.txt" ]; then
+      /usr/bin/crontab "/crontab.txt"
+      /usr/sbin/crond -b
+      echo "* Crontab loaded successfully"
+    else
+      echo "* Can not find /crontab.txt"
+    fi
+    sepurator
+  fi
+}
+
+function set_timezone {
+  if [ "$TZ" != "" ]; then
+    echo "* Setting Timezone to $TZ"
+    echo "TZ=$TZ" > /etc/environment
   else
-    echo "* Can not find /crontab.txt"
+    echo "* Timezone not set - Use UTC Time"
   fi
   sepurator
-fi
+}
+##############################################################################################################################
+# Main Code
+##############################################################################################################################
+add_borg_user
 
-if [ "$TZ" != "" ]; then
-  echo "* Setting Timezone to $TZ"
-  echo "TZ=$TZ" > /etc/environment
-else
-  echo "* Timezone not set - Use UTC Time"
-fi
+print_container_info
+print_user_info
 sepurator
+make_and_import_ssh_keys
+sepurator
+generate_host_sshkey
+sepurator
+
+maintenance_enable
+set_timezone
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
-exec /usr/sbin/sshd -D -e "$@" 2>> /logs/sshd.log
+echo ""
+exec /usr/sbin/sshd -D -e "$@" 2> /logs/sshd.log

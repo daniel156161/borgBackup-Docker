@@ -10,6 +10,8 @@ ENV TZ=""
 RUN mkdir "/.ssh"
 VOLUME ["/backups"]
 VOLUME ["/logs"]
+VOLUME ["/sshkeys/host"]
+
 COPY motd.txt /etc/motd
 COPY entrypoint.sh /
 
