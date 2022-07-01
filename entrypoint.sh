@@ -37,7 +37,13 @@ function add_borg_user {
 
 function make_and_import_ssh_keys {
   local create_folders="0"
-  touch "/.ssh/authorized_keys"
+
+  if [ ! -f "/.ssh/authorized_keys" ]; then
+    touch "/.ssh/authorized_keys"
+  else
+    rm "/.ssh/authorized_keys"
+    touch "/.ssh/authorized_keys"
+  fi
 
   for key in ${SSH_FOLDERS[@]}; do
     if [ ! -d "${key}" ]; then
@@ -59,7 +65,7 @@ function make_and_import_ssh_keys {
   FILES=$(ls -1 /sshkeys/clients)
   for key in $FILES; do
     echo "-  Adding SSH-Key $key"
-    cat "/sshkeys/clients/$key" > "/.ssh/authorized_keys"
+    cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
   done
   echo "" >> "/.ssh/authorized_keys"
 

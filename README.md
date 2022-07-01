@@ -12,7 +12,7 @@ docker run -dp 3000:22 \
 
 ## Use after setup
 ```
-export BORG_REPO='ssh://borg@localhost:3000/backups' 
+export BORG_REPO='ssh://borg@localhost:3000/backups'
 borg init -e none
 # any borg command you like
 ```
