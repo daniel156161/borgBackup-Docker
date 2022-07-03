@@ -3,10 +3,6 @@ source "/variables.sh"
 ##############################################################################################################################
 # Funktionen
 ##############################################################################################################################
-function sepurator {
-  echo "==============================================================================="
-}
-
 function print_container_info {
   sepurator
   echo "* BorgServer powered by $BORG_VERSION"
@@ -117,7 +113,7 @@ function maintenance_enable {
     echo ""
     if [ -f "/crontab.txt" ]; then
       /usr/bin/crontab "/crontab.txt"
-      /usr/sbin/crond -b
+      /usr/sbin/crond -b 2> /dev/null
       echo "- Crontab loaded successfully"
     else
       echo "- Can not find /crontab.txt"
@@ -135,6 +131,19 @@ function set_timezone {
   fi
   sepurator
 }
+
+function run_install_script {
+  if [ "$RUN_INSTALL_SCRIPT" != "false" ]; then
+    if [ ! -f "/.runnedInstall" ]; then
+      echo "* RUNNING INSTALL SCRIPT"
+      sepurator
+      sh "$RUN_INSTALL_SCRIPT"
+      echo ""
+      sepurator
+      touch "/.runnedInstall"
+    fi
+  fi
+}
 ##############################################################################################################################
 # Main Code
 ##############################################################################################################################
@@ -150,6 +159,7 @@ sepurator
 
 maintenance_enable
 set_timezone
+run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator

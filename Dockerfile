@@ -5,6 +5,7 @@ ENV UID=1000
 ENV GID=1000
 ENV MAINTENANCE_ENABLE="false"
 ENV INTERACTIVE_MODE="false"
+ENV RUN_INSTALL_SCRIPT="false"
 ENV TZ=""
 
 # Add Folders and Shell Scripts

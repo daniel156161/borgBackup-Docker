@@ -16,10 +16,6 @@ export PS1="\[\e[31m\][\[\e[m\]\[\e[38;5;172m\]\u\[\e[m\]@\[\e[38;5;153m\]\h\[\e
 ##############################################################################################################################
 source "/variables.sh"
 
-function sepurator {
-  echo "=============================================================================================="
-}
-
 function find_borg_repo {
   repo_list=( $(find "$1" -name "index.*" -type f | rev | cut -d '/' -f "2-" | rev) )
 
@@ -67,19 +63,21 @@ function select_borg_repo {
 }
 
 function ask_for_repo_password {
-  if grep -q 'key' "$BORG_REPO/config"; then
-    echo "* BORG REPO has a password"
-    sepurator
-    echo "(you can leave it empty if you not like to export BORG_PASSPHRASE)"
-    read -s -p "Please enter password: " BORG_REPO_PASSWORD
-    echo ""
-    if [ "$BORG_REPO_PASSWORD" != "" ]; then
-      export BORG_PASSPHRASE="$BORG_REPO_PASSWORD"
+  if [ -z "$BORG_PASSPHRASE" ]; then
+    if grep -q 'key' "$BORG_REPO/config"; then
+      echo "* BORG REPO has a password"
+      sepurator
+      echo "(you can leave it empty if you not like to export BORG_PASSPHRASE)"
+      read -s -p "Please enter password: " BORG_REPO_PASSWORD
+      echo ""
+      if [ "$BORG_REPO_PASSWORD" != "" ]; then
+        export BORG_PASSPHRASE="$BORG_REPO_PASSWORD"
+      fi
+    else
+      echo "* BORG REPO has no password"
     fi
-  else
-    echo "* BORG REPO has no password"
+    sepurator
   fi
-  sepurator
 }
 
 function print_container_info {
