@@ -64,7 +64,6 @@ function make_and_import_ssh_keys {
     cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
     echo "" >> "/.ssh/authorized_keys"
   done
-  echo "" >> "/.ssh/authorized_keys"
 
   chown -R "$USER":"$USER" "/.ssh"
   chmod 700 "/.ssh"
