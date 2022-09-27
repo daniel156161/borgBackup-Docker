@@ -62,6 +62,7 @@ function make_and_import_ssh_keys {
   for key in $FILES; do
     echo "-  Adding SSH-Key $key"
     cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
+    echo "" >> "/.ssh/authorized_keys"
   done
   echo "" >> "/.ssh/authorized_keys"
 
