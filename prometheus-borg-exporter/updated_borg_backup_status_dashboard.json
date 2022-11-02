@@ -1037,9 +1037,11 @@
             "type": "prometheus",
             "uid": "OmMh_rHVk"
           },
-          "expr": "sum(borg_archives_count_today{backupserver=\"$backupserver\", host=\"$host\"})",
+          "editorMode": "code",
+          "expr": "borg_archives_count_today{backupserver=\"$backupserver\", host=\"$host\"}",
           "interval": "",
           "legendFormat": "",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1051,7 +1053,7 @@
         "type": "prometheus",
         "uid": "OmMh_rHVk"
       },
-      "description": "Number of files in all repos",
+      "description": "Number of files of archives saved today",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -1112,7 +1114,7 @@
         "type": "prometheus",
         "uid": "OmMh_rHVk"
       },
-      "description": "Size of all the data, uncompressed",
+      "description": "Size of all the data of archives saved today, uncompressed",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -1158,9 +1160,11 @@
             "type": "prometheus",
             "uid": "OmMh_rHVk"
           },
-          "expr": "sum(borg_last_size{backupserver=\"$backupserver\"})",
+          "editorMode": "code",
+          "expr": "sum(borg_last_size{backupserver=\"$backupserver\", host=\"$host\"})",
           "interval": "",
           "legendFormat": "",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1172,7 +1176,7 @@
         "type": "prometheus",
         "uid": "OmMh_rHVk"
       },
-      "description": "Size of all the data, compressed",
+      "description": "Size of all the data of archives saved today, compressed",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -1218,9 +1222,11 @@
             "type": "prometheus",
             "uid": "OmMh_rHVk"
           },
-          "expr": "sum(borg_last_size_compressed{backupserver=\"$backupserver\"})",
+          "editorMode": "code",
+          "expr": "sum(borg_last_size_compressed{backupserver=\"$backupserver\", host=\"$host\"})",
           "interval": "",
           "legendFormat": "",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1232,7 +1238,7 @@
         "type": "prometheus",
         "uid": "OmMh_rHVk"
       },
-      "description": "Size of all the data, compressed and deduplicated",
+      "description": "Size of all the data of archives saved today, compressed and deduplicated",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -1278,9 +1284,11 @@
             "type": "prometheus",
             "uid": "OmMh_rHVk"
           },
-          "expr": "sum(borg_last_size_dedup{backupserver=\"$backupserver\"})",
+          "editorMode": "code",
+          "expr": "sum(borg_last_size_dedup{backupserver=\"$backupserver\", host=\"$host\"})",
           "interval": "",
           "legendFormat": "",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1292,7 +1300,7 @@
         "type": "prometheus",
         "uid": "OmMh_rHVk"
       },
-      "description": "How much space you are saving with compression and deduplication",
+      "description": "How much space you are saving with compression and deduplication of archives saved today",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -1346,9 +1354,11 @@
             "type": "prometheus",
             "uid": "OmMh_rHVk"
           },
-          "expr": "100-sum(borg_last_size_dedup{backupserver=\"$backupserver\"})/sum(borg_last_size{backupserver=\"$backupserver\"})*100",
+          "editorMode": "code",
+          "expr": "100-sum(borg_last_size_dedup{backupserver=\"$backupserver\", host=\"$host\"})/sum(borg_last_size{backupserver=\"$backupserver\", host=\"$host\"})*100",
           "interval": "",
           "legendFormat": "",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1533,7 +1543,7 @@
       },
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "Manjaro",
           "value": "Manjaro"
         },
@@ -1582,6 +1592,6 @@
   "timezone": "",
   "title": "Borg Backup status",
   "uid": "mo_dwZeMk",
-  "version": 21,
+  "version": 27,
   "weekStart": ""
 }
