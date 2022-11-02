@@ -7,11 +7,13 @@ GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 run_docker_container() {
   echo "Running..."
   docker run -dp 3000:22 \
+    -p 9100:9100 \
     -e UID=$(id -u) \
     -e GID=$(id -g) \
     -e MAINTENANCE_ENABLE="true" \
     -e INTERACTIVE_MODE="true" \
     -e TZ="Europe/Vienna" \
+    -e RUN_PROMETHEUS_EXPORTER="0 * * * *" \
     -v "$PWD"/Testing/crontab.txt:/crontab.txt \
     -v "$PWD"/Testing/test_script.sh:/test_script.sh \
     -v "$PWD"/sshkeys/clients:/sshkeys/clients \

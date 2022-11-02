@@ -38,6 +38,18 @@ Create New Volumen into /logs if you like to log anything or get the logs
 ## Set Timezone - not into 1.1.17
 Use ENV TZ="Your time zone" if not set will use UTC
 
+## Export Data to Grafana and Prometheus - not into 1.1.17
+Borg exporter for Prometheus from https://github.com/mad-ady/prometheus-borg-exporter
+
+Use ENV RUN_PROMETHEUS_EXPORTER and set it to any CRONJOB TASK like ```0 * * * *``` to update the /logs/borg_exporter.prom every hour
+Config is into ```/etc/borg_exporter.rc``` sample config:
+```
+BORG_PASSPHRASE=""
+REPOSITORY=""
+PUSHGATEWAY_URL=""
+BASEREPODIR="/backups"
+```
+
 ## borgbackup Version into Tags
 
 | TAG | Borg Backup Version | Alpine Version |

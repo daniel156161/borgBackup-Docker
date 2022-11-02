@@ -144,6 +144,24 @@ function run_install_script {
     fi
   fi
 }
+
+function run_prometheus_exporter() {
+  if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
+    echo "* STARTING Prometheus Exporter for Borg Backup"
+
+    crontab -l > /tmp/cron_bkp
+    echo "" >> /tmp/cron_bkp
+
+    echo "* Add Cronjob to Crontab"
+    echo "$RUN_PROMETHEUS_EXPORTER /usr/local/bin/borg_exporter.sh 2>&1" >> /tmp/cron_bkp
+    crontab /tmp/cron_bkp
+    rm /tmp/cron_bkp
+
+    echo "* STARTING Node Exporter"
+    node_exporter --collector.textfile.directory="$NODE_EXPORTER_DIR" &
+    sepurator
+  fi
+}
 ##############################################################################################################################
 # Main Code
 ##############################################################################################################################
@@ -159,6 +177,7 @@ sepurator
 
 maintenance_enable
 set_timezone
+run_prometheus_exporter
 run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."

@@ -6,6 +6,7 @@ ENV GID=1000
 ENV MAINTENANCE_ENABLE="false"
 ENV INTERACTIVE_MODE="false"
 ENV RUN_INSTALL_SCRIPT="false"
+ENV RUN_PROMETHEUS_EXPORTER="false"
 ENV TZ=""
 
 # Add Folders and Shell Scripts
@@ -21,10 +22,13 @@ COPY variables.sh /
 COPY .bash_profile /root/
 COPY .bashrc /root/
 
+COPY prometheus-borg-exporter/borg_exporter.sh /usr/local/bin/
+COPY prometheus-borg-exporter/borg_exporter.rc /etc/
+
 # Install packages
 RUN apk update ; apk upgrade
-RUN apk add --no-cache sudo bash bash-completion tzdata openssh-server openrc neofetch \
-    borgbackup
+RUN apk add --no-cache sudo bash bash-completion tzdata openssh openrc neofetch \
+    borgbackup dateutils prometheus-node-exporter curl
 RUN rm -rf /var/cache/apk/*
 
 # Setup SSH-Server
