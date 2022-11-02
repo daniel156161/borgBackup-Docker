@@ -16,11 +16,11 @@ VOLUME ["/logs"]
 VOLUME ["/sshkeys/host"]
 
 COPY motd.txt /etc/motd
-COPY entrypoint.sh /
-COPY variables.sh /
+COPY entrypoint-script/entrypoint.sh /
+COPY entrypoint-script/variables.sh /
 
-COPY .bash_profile /root/
-COPY .bashrc /root/
+COPY bash-config/.bash_profile /root/
+COPY bash-config/.bashrc /root/
 
 COPY prometheus-borg-exporter/borg_exporter.sh /usr/local/bin/
 COPY prometheus-borg-exporter/borg_exporter.rc /etc/
