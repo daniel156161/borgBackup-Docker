@@ -1,14 +1,8 @@
 #!/bin/bash
-DOCKER_IMAGE_VERSION="1.0.8"
-BORG_VERSION=$(borg -V)
-SSH_FOLDERS=( /sshkeys/clients /sshkeys/host )
+source "/variables.sh"
 ##############################################################################################################################
 # Funktionen
 ##############################################################################################################################
-function sepurator {
-  echo "==============================================================================="
-}
-
 function print_container_info {
   sepurator
   echo "* BorgServer powered by $BORG_VERSION"
@@ -18,14 +12,15 @@ function print_container_info {
 
 function print_user_info {
   sepurator
-  echo "* USER: $USER ID: $UID"
-  echo "* GROUP: $USER GID: $GID"
+  echo "* USER:  $USER - ID:  $UID"
+  echo "* GROUP: $USER - GID: $GID"
 }
 
 function add_borg_user {
   if ! id "borg" &>/dev/null; then
     sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
     adduser \
+    -s /bin/bash \
     --disabled-password \
     --gecos "" \
     --home "/" \
@@ -38,7 +33,13 @@ function add_borg_user {
 
 function make_and_import_ssh_keys {
   local create_folders="0"
-  touch "/.ssh/authorized_keys"
+
+  if [ ! -f "/.ssh/authorized_keys" ]; then
+    touch "/.ssh/authorized_keys"
+  else
+    rm "/.ssh/authorized_keys"
+    touch "/.ssh/authorized_keys"
+  fi
 
   for key in ${SSH_FOLDERS[@]}; do
     if [ ! -d "${key}" ]; then
@@ -60,9 +61,9 @@ function make_and_import_ssh_keys {
   FILES=$(ls -1 /sshkeys/clients)
   for key in $FILES; do
     echo "-  Adding SSH-Key $key"
-    cat "/sshkeys/clients/$key" > "/.ssh/authorized_keys"
+    cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
+    echo "" >> "/.ssh/authorized_keys"
   done
-  echo "" >> "/.ssh/authorized_keys"
 
   chown -R "$USER":"$USER" "/.ssh"
   chmod 700 "/.ssh"
@@ -112,10 +113,10 @@ function maintenance_enable {
     echo ""
     if [ -f "/crontab.txt" ]; then
       /usr/bin/crontab "/crontab.txt"
-      /usr/sbin/crond -b
-      echo "* Crontab loaded successfully"
+      /usr/sbin/crond -b 2> /dev/null
+      echo "- Crontab loaded successfully"
     else
-      echo "* Can not find /crontab.txt"
+      echo "- Can not find /crontab.txt"
     fi
     sepurator
   fi
@@ -129,6 +130,37 @@ function set_timezone {
     echo "* Timezone not set - Use UTC Time"
   fi
   sepurator
+}
+
+function run_install_script {
+  if [ "$RUN_INSTALL_SCRIPT" != "false" ]; then
+    if [ ! -f "/.runnedInstall" ]; then
+      echo "* RUNNING INSTALL SCRIPT"
+      sepurator
+      sh "$RUN_INSTALL_SCRIPT"
+      echo ""
+      sepurator
+      touch "/.runnedInstall"
+    fi
+  fi
+}
+
+function run_prometheus_exporter() {
+  if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
+    echo "* STARTING Prometheus Exporter for Borg Backup"
+
+    crontab -l > /tmp/cron_bkp
+    echo "" >> /tmp/cron_bkp
+
+    echo "* Add Cronjob to Crontab"
+    echo "$RUN_PROMETHEUS_EXPORTER /usr/local/bin/borg_exporter.sh 2>&1" >> /tmp/cron_bkp
+    crontab /tmp/cron_bkp
+    rm /tmp/cron_bkp
+
+    echo "* STARTING Node Exporter"
+    node_exporter --collector.textfile.directory="$NODE_EXPORTER_DIR" &
+    sepurator
+  fi
 }
 ##############################################################################################################################
 # Main Code
@@ -145,6 +177,8 @@ sepurator
 
 maintenance_enable
 set_timezone
+run_prometheus_exporter
+run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
