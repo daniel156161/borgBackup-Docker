@@ -39,6 +39,7 @@ RUN sed -ie 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh
 RUN sed -ie 's|#HostKey /etc/ssh/ssh_host_rsa_key|HostKey /sshkeys/host/ssh_host_rsa_key|g' /etc/ssh/sshd_config
 RUN sed -ie 's|#HostKey /etc/ssh/ssh_host_ecdsa_key|HostKey /sshkeys/host/ssh_host_ecdsa_key|g' /etc/ssh/sshd_config
 RUN sed -ie 's|#HostKey /etc/ssh/ssh_host_ed25519_key|HostKey /sshkeys/host/ssh_host_ed25519_key|g' /etc/ssh/sshd_config
+RUN sed -ie 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/bin/bash|g' /etc/passwd
 
 EXPOSE 22
 ENTRYPOINT [ "/entrypoint.sh" ]

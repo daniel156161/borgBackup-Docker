@@ -89,7 +89,7 @@ function print_container_info {
 # Run Code
 ##############################################################################################################################
 if [ "$INTERACTIVE_MODE" != "false" ]; then
-  find_borg_repo backups/
+  find_borg_repo /backups/
   export BORG_REPO="${repo_list[selected_repo]}"
   if [ ! -z "$BORG_REPO" ]; then
     ask_for_repo_password
