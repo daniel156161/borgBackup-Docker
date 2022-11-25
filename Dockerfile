@@ -18,6 +18,7 @@ VOLUME ["/sshkeys/host"]
 COPY motd.txt /etc/motd
 COPY entrypoint-script/entrypoint.sh /
 COPY entrypoint-script/variables.sh /
+COPY scripts/borgbackup.sh /usr/local/bin/
 
 COPY bash-config/.bash_profile /root/
 COPY bash-config/.bashrc /root/
