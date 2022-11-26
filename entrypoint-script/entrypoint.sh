@@ -157,6 +157,11 @@ function run_prometheus_exporter() {
     crontab /tmp/cron_bkp
     rm /tmp/cron_bkp
 
+    if [ ! -f "/var/log/borg_exporter.prom" ]; then
+      echo "* Export Borg Backup Data for Node Exporter"
+      /usr/local/bin/borg_exporter.sh
+    fi
+
     echo "* STARTING Node Exporter"
     node_exporter --collector.textfile.directory="$NODE_EXPORTER_DIR" &
     sepurator
@@ -183,4 +188,4 @@ run_install_script
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
 echo ""
-exec /usr/sbin/sshd -D -e "$@" 2> /logs/sshd.log
+exec /usr/sbin/sshd -D -e "$@" 2> /var/log/sshd.log
