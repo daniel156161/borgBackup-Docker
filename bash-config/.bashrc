@@ -15,6 +15,7 @@ export PS1="\[\e[31m\][\[\e[m\]\[\e[38;5;172m\]\u\[\e[m\]@\[\e[38;5;153m\]\h\[\e
 # Borg Repo finder
 ##############################################################################################################################
 source "/variables.sh"
+COLUMNS=$(/usr/bin/tput cols)
 
 function find_borg_repo {
   repo_list=( $(find "$1" -name "index.*" -type f | rev | cut -d '/' -f "2-" | rev) )

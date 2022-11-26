@@ -29,7 +29,7 @@ COPY prometheus-borg-exporter/borg_exporter.rc /etc/
 # Install packages
 RUN apk update ; apk upgrade
 RUN apk add --no-cache sudo bash bash-completion tzdata openssh openrc neofetch \
-    borgbackup dateutils prometheus-node-exporter curl
+    borgbackup dateutils prometheus-node-exporter curl wget
 RUN rm -rf /var/cache/apk/*
 
 # Setup SSH-Server

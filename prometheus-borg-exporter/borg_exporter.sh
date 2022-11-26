@@ -205,6 +205,13 @@ function cleanup() {
 writeDefinitionsToMetrics
 if [ -n "${REPOSITORY}" ]; then
     getBorgDataForRepository "${REPOSITORY}" "${HOSTNAME}"
+    if [ ! -z "${READ_BASEREPODIR}" ]; then
+        if [ -d "${BASEREPODIR}" ]; then
+            findRepositorysAndGetData
+        else
+            echo "Error: Set BASEREPODIR in /etc/borg_exporter.rc"
+        fi
+    fi
 else
     #discover (recursively) borg repositories starting from a path and extract info for each
     #(e.g. when running on the backup server directly)
