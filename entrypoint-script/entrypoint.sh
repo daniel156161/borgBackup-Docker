@@ -49,7 +49,7 @@ function make_and_import_ssh_keys {
     fi
   done
 
-  chown -R "$USER":"$USER" "/sshkeys"
+  #chown -R "$USER":"$USER" "/sshkeys"
 
   if [ $create_folders == "1" ]; then
     sepurator
@@ -145,25 +145,35 @@ function run_install_script {
   fi
 }
 
+function create_folder_and_change_permissions {
+  if [ ! -d "$1" ]; then
+    mkdir -p "$1"
+  fi
+  chown -R "$USER":"$USER" "$1"
+}
+
 function run_prometheus_exporter() {
   if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
+    create_folder_and_change_permissions "/.config"
+    create_folder_and_change_permissions "/var/log/"
+
     echo "* STARTING Prometheus Exporter for Borg Backup"
 
     crontab -l > /tmp/cron_bkp
     echo "" >> /tmp/cron_bkp
 
-    echo "* Add Cronjob to Crontab"
-    echo "$RUN_PROMETHEUS_EXPORTER /usr/local/bin/borg_exporter.sh 2>&1" >> /tmp/cron_bkp
+    echo "- Add Cronjob to Crontab"
+    echo "$RUN_PROMETHEUS_EXPORTER su -c '/usr/local/bin/borg_exporter.sh 2>&1' -s /bin/bash borg" >> /tmp/cron_bkp
     crontab /tmp/cron_bkp
     rm /tmp/cron_bkp
 
     if [ ! -f "/var/log/borg_exporter.prom" ]; then
-      echo "* Export Borg Backup Data for Node Exporter"
-      /usr/local/bin/borg_exporter.sh
+      echo "- Export Borg Backup Data for Node Exporter"
+      sudo -H -u "$USER" bash -c "/usr/local/bin/borg_exporter.sh"
     fi
 
-    echo "* STARTING Node Exporter"
-    node_exporter --collector.textfile.directory="$NODE_EXPORTER_DIR" &
+    echo "- STARTING Node Exporter"
+    sudo -H -u "$USER" bash -c "node_exporter --collector.textfile.directory=$NODE_EXPORTER_DIR &"
     sepurator
   fi
 }
