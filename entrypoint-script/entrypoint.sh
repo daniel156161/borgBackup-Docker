@@ -17,7 +17,7 @@ function print_user_info {
 }
 
 function add_borg_user {
-  if ! id "borg" &>/dev/null; then
+  if ! id "$USER" &>/dev/null; then
     sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
     adduser \
     -s /bin/bash \
