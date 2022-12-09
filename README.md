@@ -54,7 +54,7 @@ BASEREPODIR="/backups"
 
 | TAG | Borg Backup Version | Alpine Version |
 | ----------- | ----------- |  ----------- |
-| lastest | 1.2.1                         | edge                 |
+| lastest | 1.2.2                         | edge                 |
 | stable    | 1.2.0                         | latest                  |
 | 1.1.17  | 1.1.17                       | not know any more |
 
