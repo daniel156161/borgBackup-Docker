@@ -18,16 +18,15 @@ function print_user_info {
 
 function add_borg_user {
   if ! id "$USER" &>/dev/null; then
-    sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
-    adduser \
-    -s /bin/bash \
-    --disabled-password \
-    --gecos "" \
-    --home "/" \
-    --uid "$UID" \
-    "$USER"
-    echo "$USER:*" | chpasswd 2>> /dev/null
-    addgroup -g "$GID" "$USER"  2>> /dev/null
+    groupadd -g "$GID" "$USER" >> /dev/null
+    useradd -r -u "$UID" -g "$GID" -s "/bin/bash" "$USER" >> /dev/null
+    passwd -d "$USER" >> /dev/null
+    printf "$USER ALL=(ALL) NOPASSWD: ALL\n" | tee -a /etc/sudoers >> /dev/null
+    usermod -d / borg >> /dev/null
+
+    create_folder_and_change_permissions "/.config"
+    create_folder_and_change_permissions "/.cache"
+    chmod 700 "/.cache"
   fi
 }
 
@@ -112,8 +111,8 @@ function maintenance_enable {
     echo "* MAINTENANCE MODE - ENABLED"
     echo ""
     if [ -f "/crontab.txt" ]; then
-      /usr/bin/crontab "/crontab.txt"
-      /usr/sbin/crond -b 2> /dev/null
+      crontab "/crontab.txt"
+      crond -i 2> /dev/null
       echo "- Crontab loaded successfully"
     else
       echo "- Can not find /crontab.txt"
@@ -152,12 +151,20 @@ function create_folder_and_change_permissions {
   chown -R "$USER":"$USER" "$1"
 }
 
+function run_teleport_server() {
+  if [ -f "/etc/teleport.yaml" ]; then
+    echo "* STARTING Teleport Server"
+    teleport start -c /etc/teleport.yaml > /var/log/teleport.log 2>&1 &
+    sepurator
+	fi
+}
+
 function run_prometheus_exporter() {
   if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
-    create_folder_and_change_permissions "/.config"
     create_folder_and_change_permissions "/var/log/"
 
     echo "* STARTING Prometheus Exporter for Borg Backup"
+    echo ""
 
     crontab -l > /tmp/cron_bkp
     echo "" >> /tmp/cron_bkp
@@ -173,7 +180,7 @@ function run_prometheus_exporter() {
     fi
 
     echo "- STARTING Node Exporter"
-    sudo -H -u "$USER" bash -c "node_exporter --collector.textfile.directory=$NODE_EXPORTER_DIR &"
+    sudo -H -u "$USER" bash -c "prometheus-node-exporter --collector.textfile.directory=$NODE_EXPORTER_DIR > /dev/null 2>&1 &"
     sepurator
   fi
 }
@@ -192,6 +199,7 @@ sepurator
 
 maintenance_enable
 set_timezone
+run_teleport_server
 run_prometheus_exporter
 run_install_script
 
