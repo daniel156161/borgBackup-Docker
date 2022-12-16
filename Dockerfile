@@ -29,6 +29,7 @@ COPY prometheus-borg-exporter/borg_exporter.sh /usr/local/bin/
 COPY prometheus-borg-exporter/borg_exporter.rc /etc/
 
 # Install packages
+RUN pacman-key --init
 RUN pacman -Syu --noconfirm sudo bash-completion openssh neofetch \
     borgbackup dateutils prometheus-node-exporter wget git base-devel cron net-tools inetutils
 
