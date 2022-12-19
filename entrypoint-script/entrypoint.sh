@@ -1,8 +1,8 @@
 #!/bin/bash
 source "/variables.sh"
-##############################################################################################################################
+#####################################################################################################
 # Funktionen
-##############################################################################################################################
+#####################################################################################################
 function print_container_info {
   sepurator
   echo "* BorgServer powered by $BORG_VERSION"
@@ -55,7 +55,6 @@ function make_and_import_ssh_keys {
   fi
 
   echo "* IMPORT SSH KEYS"
-  echo ""
 
   FILES=$(ls -1 /sshkeys/clients)
   for key in $FILES; do
@@ -76,31 +75,24 @@ function print_message {
 }
 
 function generate_host_sshkey {
-  local generated_keys="0"
-  echo "* GENERATE HOST SSH-KEYs"
   # Generate SSH-Keys
   if [ ! -f "/sshkeys/host/ssh_host_rsa_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY RSA not found, generating..."
     ssh-keygen -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
     print_message "HOST SSH-KEY RSA Generated"
-    generated_keys="1"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ecdsa_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY ECDSA not found, generating..."
     ssh-keygen -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
     print_message "HOST SSH-KEY ECDSA Generated"
-    generated_keys="1"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY ED25519 not found, generating..."
     ssh-keygen -t ed25519 -b 521 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
     print_message "HOST SSH-KEY ED25519 Generated"
-    generated_keys="1"
-  fi
-
-  if [ "$generated_keys" == "0" ]; then
-    echo ""
-    echo "- HOST SSH-KEYs already exist"
   fi
 
   chown -R "$USER":"$USER" "/sshkeys/host"
@@ -109,7 +101,6 @@ function generate_host_sshkey {
 function maintenance_enable {
   if [ "$MAINTENANCE_ENABLE" != "false" ]; then
     echo "* MAINTENANCE MODE - ENABLED"
-    echo ""
     if [ -f "/crontab.txt" ]; then
       crontab "/crontab.txt"
       crond -i 2> /dev/null
@@ -137,7 +128,7 @@ function run_install_script {
       echo "* RUNNING INSTALL SCRIPT"
       sepurator
       sh "$RUN_INSTALL_SCRIPT"
-      echo ""
+
       sepurator
       touch "/.runnedInstall"
     fi
@@ -164,7 +155,6 @@ function run_prometheus_exporter() {
     create_folder_and_change_permissions "/var/log/"
 
     echo "* STARTING Prometheus Exporter for Borg Backup"
-    echo ""
 
     crontab -l > /tmp/cron_bkp
     echo "" >> /tmp/cron_bkp
@@ -184,16 +174,16 @@ function run_prometheus_exporter() {
     sepurator
   fi
 }
-##############################################################################################################################
+#####################################################################################################
 # Main Code
-##############################################################################################################################
+#####################################################################################################
 add_borg_user
 
 print_container_info
 print_user_info
 sepurator
 make_and_import_ssh_keys
-sepurator
+
 generate_host_sshkey
 sepurator
 
@@ -205,5 +195,5 @@ run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
-echo ""
-exec /usr/sbin/sshd -D -e "$@" 2> /var/log/sshd.log
+
+exec /usr/sbin/sshd -D -e "$@" #2> /var/log/sshd.log
