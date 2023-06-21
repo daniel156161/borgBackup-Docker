@@ -116,6 +116,7 @@ function set_timezone {
   if [ "$TZ" != "" ]; then
     echo "* Setting Timezone to $TZ"
     echo "TZ=$TZ" > /etc/environment
+    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
   else
     echo "* Timezone not set - Use UTC Time"
   fi
