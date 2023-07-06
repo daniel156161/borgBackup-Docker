@@ -1,7 +1,7 @@
 name: Build and Push Docker Container
 on:
   schedule:
-    - cron: "30 20 * * 4"
+    - cron: "40 19 * * 4"
 
 jobs:
   build-and-push:
