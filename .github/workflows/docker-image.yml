@@ -37,7 +37,7 @@ jobs:
         with:
           ref: archlinux
 
-      - name: Build and push Docker image for latest tag
+      - name: Build and push Docker image for archlinux tag
         uses: docker/build-push-action@v4
         with:
           context: .
