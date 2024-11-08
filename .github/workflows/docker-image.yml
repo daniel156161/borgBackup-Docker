@@ -24,14 +24,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and push Docker image for latest tag
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: daniel156161/borgbackup-ssh:latest
-          platforms: linux/amd64
-
       # Change to Brache archlinux
       - uses: actions/checkout@v4
         with:
