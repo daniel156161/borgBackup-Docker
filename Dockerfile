@@ -28,6 +28,9 @@ COPY bash-config/.bashrc /
 COPY prometheus-borg-exporter/borg_exporter.sh /usr/local/bin/
 COPY prometheus-borg-exporter/borg_exporter.rc /etc/
 
+# Create .cache folder
+RUN mkdir -p "/root/.cache/crontab"
+
 # Install packages
 RUN pacman-key --init
 RUN pacman -Syu --noconfirm sudo bash-completion openssh neofetch \
