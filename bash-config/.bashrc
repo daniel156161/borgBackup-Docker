@@ -1,3 +1,5 @@
+[ ! -z "$USE_TMUX_SHELL"  ] && [[ -t 0 ]] && [ -z "$TMUX"  ] && (exec tmux attach || exec tmux new-session && exit)
+
 alias update='sudo pacman -Syu --noconfirm'
 
 export HISTTIMEFORMAT="%d/%m/%y %T "
