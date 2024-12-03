@@ -24,12 +24,16 @@ COPY bash-config/.bashrc_root /root/
 
 COPY bash-config/.bash_profile /
 COPY bash-config/.bashrc /
+COPY bash-config/locale.gen /etc/locale.gen
 
 COPY prometheus-borg-exporter/borg_exporter.sh /usr/local/bin/
 COPY prometheus-borg-exporter/borg_exporter.rc /etc/
 
 # Create .cache folder
 RUN mkdir -p "/root/.cache/crontab"
+
+# Create locale files
+RUN locale-gen
 
 # Install packages
 RUN pacman-key --init
