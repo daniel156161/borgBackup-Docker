@@ -3,6 +3,19 @@ source "/variables.sh"
 #####################################################################################################
 # Funktionen
 #####################################################################################################
+function set_environment_variables_if_not_empty {
+  # Set Tmux Shell for .bashrc to load tmux and attach session if exists else create new session
+  if [ "$USE_TMUX_SHELL" != "" ]; then
+    echo "USE_TMUX_SHELL=$USE_TMUX_SHELL" >> /etc/environment
+  fi
+
+  # Set Server Timezone
+  if [ "$TZ" != "" ]; then
+    echo "TZ=$TZ" >> /etc/environment
+    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+  fi
+}
+
 function print_container_info {
   sepurator
   echo "* BorgServer powered by $BORG_VERSION"
@@ -112,11 +125,9 @@ function maintenance_enable {
   fi
 }
 
-function set_timezone {
+function show_timezone_output {
   if [ "$TZ" != "" ]; then
     echo "* Setting Timezone to $TZ"
-    echo "TZ=$TZ" > /etc/environment
-    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
   else
     echo "* Timezone not set - Use UTC Time"
   fi
@@ -178,6 +189,7 @@ function run_prometheus_exporter() {
 #####################################################################################################
 # Main Code
 #####################################################################################################
+set_environment_variables_if_not_empty
 add_borg_user
 
 print_container_info
@@ -189,7 +201,7 @@ generate_host_sshkey
 sepurator
 
 maintenance_enable
-set_timezone
+show_timezone_output
 run_teleport_server
 run_prometheus_exporter
 run_install_script
