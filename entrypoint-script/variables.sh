@@ -1,4 +1,4 @@
-DOCKER_IMAGE_VERSION="2.0.0"
+DOCKER_IMAGE_VERSION="3.0.0"
 BORG_VERSION=$(borg -V)
 SSH_FOLDERS=( "/sshkeys/clients" "/sshkeys/host" )
 NODE_EXPORTER_DIR="/var/log"

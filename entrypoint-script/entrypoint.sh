@@ -154,14 +154,6 @@ function create_folder_and_change_permissions {
   chown -R "$USER":"$USER" "$1"
 }
 
-function run_teleport_server() {
-  if [ -f "/etc/teleport.yaml" ]; then
-    echo "* STARTING Teleport Server"
-    teleport start -c /etc/teleport.yaml > /var/log/teleport.log 2>&1 &
-    sepurator
-	fi
-}
-
 function run_prometheus_exporter() {
   if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
     create_folder_and_change_permissions "/var/log/"
@@ -186,6 +178,15 @@ function run_prometheus_exporter() {
     sepurator
   fi
 }
+
+function run_correct_ssh_service() {
+  if [ -f "/etc/teleport.yaml" ]; then
+    echo "* STARTING Teleport Server"
+    exec teleport start -c /etc/teleport.yaml 2>&1
+  else
+    exec /usr/sbin/sshd -D -e "$@" 2>&1
+  fi;
+}
 #####################################################################################################
 # Main Code
 #####################################################################################################
@@ -202,11 +203,10 @@ sepurator
 
 maintenance_enable
 show_timezone_output
-run_teleport_server
 run_prometheus_exporter
 run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
 
-exec /usr/sbin/sshd -D -e "$@" #2> /var/log/sshd.log
+run_correct_ssh_service
