@@ -7,18 +7,17 @@ DOCKER_CONTAINER_NAME="borgbackup"
 
 function run_docker_container {
   echo "Running..."
-  docker run -d \
+  docker run --rm -d \
     -p 2222:22 \
     -p 9100:9100 \
     -e UID=$(id -u) \
     -e GID=$(id -g) \
-    -e MAINTENANCE_ENABLE="true" \
     -e INTERACTIVE_MODE="true" \
     -e TZ="Europe/Vienna" \
     -e RUN_PROMETHEUS_EXPORTER="15 * * * *" \
-    -v "$PWD"/sshkeys/clients:/sshkeys/clients \
-    -v "$PWD"/sshkeys/host:/sshkeys/host \
-    -v "$PWD"/backups:/backups \
+    -v "$PWD/sshkeys/clients:/sshkeys/clients:ro" \
+    -v "$PWD/sshkeys/host:/sshkeys/host" \
+    -v "$PWD/backups:/backups" \
     "$DOCKER_IMAGE_NAME:$GIT_BRANCH"
 }
 
