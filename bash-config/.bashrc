@@ -1,4 +1,7 @@
-[ ! -z "$USE_TMUX_SHELL"  ] && [[ -t 0 ]] && [ -z "$TMUX"  ] && (exec tmux attach || exec tmux new-session && exit)
+if [ ! -z "$USE_TMUX_SHELL" ] && [[ -t 0 ]] && [ -z "$TMUX"  ]; then 
+  tmux attach || tmux new-session 
+  exit
+fi
 
 alias update='sudo pacman -Syu --noconfirm'
 
