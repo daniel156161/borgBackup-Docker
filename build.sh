@@ -16,8 +16,6 @@ function run_docker_container {
     -e INTERACTIVE_MODE="true" \
     -e TZ="Europe/Vienna" \
     -e RUN_PROMETHEUS_EXPORTER="0 * * * *" \
-    -v "$PWD"/Testing/crontab.txt:/crontab.txt \
-    -v "$PWD"/Testing/test_script.sh:/test_script.sh \
     -v "$PWD"/sshkeys/clients:/sshkeys/clients \
     -v "$PWD"/backups:/backups \
     "$DOCKER_IMAGE_NAME:$GIT_BRANCH"
