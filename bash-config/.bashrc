@@ -1,4 +1,4 @@
-if [ ! -z "$USE_TMUX_SHELL" ] && [[ -t 0 ]] && [ -z "$TMUX"  ]; then 
+if [ ! -z $(cat /etc/environment | grep "USE_TMUX_SHELL") ] && [[ -t 0 ]] && [ -z "$TMUX"  ]; then 
   tmux attach || tmux new-session 
   exit
 fi
