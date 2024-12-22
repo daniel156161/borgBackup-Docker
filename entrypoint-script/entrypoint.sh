@@ -165,7 +165,7 @@ function run_prometheus_exporter() {
 
     echo "- Add Cronjob to Crontab"
     echo "$RUN_PROMETHEUS_EXPORTER su -c '/usr/local/bin/borg_exporter.sh 2>&1' -s /bin/bash borg" >> /tmp/cron_bkp
-    crontab /tmp/cron_bkp
+    crontab /tmp/cron_bkp > /dev/null 2>&1
     rm /tmp/cron_bkp
 
     if [ ! -f "/var/log/borg_exporter.prom" ]; then
