@@ -44,8 +44,8 @@ RUN pacman -Syu --noconfirm sudo bash-completion openssh neofetch \
 RUN useradd builduser -m
 RUN passwd -d builduser
 RUN printf 'builduser ALL=(ALL) ALL\n' | tee -a /etc/sudoers
-#RUN sudo -u builduser bash -c 'cd ~ && git clone https://aur.archlinux.org/teleport-bin.git teleport && cd teleport && makepkg -si --noconfirm && cd ~ && rm -rf teleport'
-RUN sudo -u builduser bash -c 'cd ~ && git clone https://git.yiprawr.dev/daniel156161/teleport-bin.git teleport && cd teleport && makepkg -si --noconfirm && cd ~ && rm -rf teleport'
+RUN sudo -u builduser bash -c 'cd ~ && git clone https://aur.archlinux.org/teleport-bin.git teleport && cd teleport && makepkg -si --noconfirm && cd ~ && rm -rf teleport'
+#RUN sudo -u builduser bash -c 'cd ~ && git clone https://git.yiprawr.dev/daniel156161/teleport-bin.git teleport && cd teleport && makepkg -si --noconfirm && cd ~ && rm -rf teleport'
 RUN userdel -r builduser
 
 # Setup SSH-Server
