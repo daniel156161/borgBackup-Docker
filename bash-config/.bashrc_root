@@ -97,4 +97,4 @@ if [ "$INTERACTIVE_MODE" != "false" ]; then
 fi
 
 print_container_info
-neofetch
+fastfetch --config neofetch

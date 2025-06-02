@@ -29,4 +29,4 @@ function print_container_info {
 # Run Code
 ##############################################################################################################################
 print_container_info
-neofetch
+fastfetch --config neofetch

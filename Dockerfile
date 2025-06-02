@@ -37,7 +37,7 @@ RUN locale-gen
 
 # Install packages
 RUN pacman-key --init
-RUN pacman -Syu --noconfirm sudo bash-completion openssh neofetch \
+RUN pacman -Syu --noconfirm sudo bash-completion openssh fastfetch \
     borgbackup dateutils prometheus-node-exporter wget git base-devel cron net-tools inetutils tmux
 
 # Make Build User
