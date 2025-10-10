@@ -9,7 +9,7 @@ ENV RUN_INSTALL_SCRIPT="false"
 ENV RUN_PROMETHEUS_EXPORTER="false"
 ENV TZ=""
 
-RUN sudo dbus-uuidgen --ensure=/etc/machine-id
+RUN dbus-uuidgen --ensure=/etc/machine-id
 
 # Add Folders and Shell Scripts
 RUN mkdir "/.ssh"
