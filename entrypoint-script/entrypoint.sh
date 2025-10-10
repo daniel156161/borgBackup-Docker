@@ -191,6 +191,7 @@ function run_correct_ssh_service() {
 # Main Code
 #####################################################################################################
 set_environment_variables_if_not_empty
+dbus-uuidgen --ensure=/etc/machine-id
 add_borg_user
 
 print_container_info
