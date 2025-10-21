@@ -1,8 +1,21 @@
 #!/bin/bash
 source "/variables.sh"
-##############################################################################################################################
+#####################################################################################################
 # Funktionen
-##############################################################################################################################
+#####################################################################################################
+function set_environment_variables_if_not_empty {
+  # Set Tmux Shell for .bashrc to load tmux and attach session if exists else create new session
+  if [ "$USE_TMUX_SHELL" != "" ]; then
+    echo "USE_TMUX_SHELL=$USE_TMUX_SHELL" >> /etc/environment
+  fi
+
+  # Set Server Timezone
+  if [ "$TZ" != "" ]; then
+    echo "TZ=$TZ" >> /etc/environment
+    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+  fi
+}
+
 function print_container_info {
   sepurator
   echo "* BorgServer powered by $BORG_VERSION"
@@ -18,16 +31,15 @@ function print_user_info {
 
 function add_borg_user {
   if ! id "$USER" &>/dev/null; then
-    sh -c "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
-    adduser \
-    -s /bin/bash \
-    --disabled-password \
-    --gecos "" \
-    --home "/" \
-    --uid "$UID" \
-    "$USER"
-    echo "$USER:*" | chpasswd 2>> /dev/null
-    addgroup -g "$GID" "$USER"  2>> /dev/null
+    groupadd -g "$GID" "$USER" >> /dev/null
+    useradd -r -u "$UID" -g "$GID" -s "/bin/bash" "$USER" >> /dev/null
+    passwd -d "$USER" >> /dev/null
+    printf "$USER ALL=(ALL) NOPASSWD: ALL\n" | tee -a /etc/sudoers >> /dev/null
+    usermod -d / borg >> /dev/null
+
+    create_folder_and_change_permissions "/.config"
+    create_folder_and_change_permissions "/.cache"
+    chmod 700 "/.cache"
   fi
 }
 
@@ -56,7 +68,6 @@ function make_and_import_ssh_keys {
   fi
 
   echo "* IMPORT SSH KEYS"
-  echo ""
 
   FILES=$(ls -1 /sshkeys/clients)
   for key in $FILES; do
@@ -77,31 +88,24 @@ function print_message {
 }
 
 function generate_host_sshkey {
-  local generated_keys="0"
-  echo "* GENERATE HOST SSH-KEYs"
   # Generate SSH-Keys
   if [ ! -f "/sshkeys/host/ssh_host_rsa_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY RSA not found, generating..."
     ssh-keygen -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
     print_message "HOST SSH-KEY RSA Generated"
-    generated_keys="1"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ecdsa_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY ECDSA not found, generating..."
     ssh-keygen -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
     print_message "HOST SSH-KEY ECDSA Generated"
-    generated_keys="1"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
+    sepurator
     print_message "HOST SSH-KEY ED25519 not found, generating..."
     ssh-keygen -t ed25519 -b 521 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
     print_message "HOST SSH-KEY ED25519 Generated"
-    generated_keys="1"
-  fi
-
-  if [ "$generated_keys" == "0" ]; then
-    echo ""
-    echo "- HOST SSH-KEYs already exist"
   fi
 
   chown -R "$USER":"$USER" "/sshkeys/host"
@@ -110,10 +114,9 @@ function generate_host_sshkey {
 function maintenance_enable {
   if [ "$MAINTENANCE_ENABLE" != "false" ]; then
     echo "* MAINTENANCE MODE - ENABLED"
-    echo ""
     if [ -f "/crontab.txt" ]; then
-      /usr/bin/crontab "/crontab.txt"
-      /usr/sbin/crond -b 2> /dev/null
+      crontab "/crontab.txt"
+      crond -i 2> /dev/null
       echo "- Crontab loaded successfully"
     else
       echo "- Can not find /crontab.txt"
@@ -122,10 +125,9 @@ function maintenance_enable {
   fi
 }
 
-function set_timezone {
+function show_timezone_output {
   if [ "$TZ" != "" ]; then
     echo "* Setting Timezone to $TZ"
-    echo "TZ=$TZ" > /etc/environment
   else
     echo "* Timezone not set - Use UTC Time"
   fi
@@ -138,7 +140,7 @@ function run_install_script {
       echo "* RUNNING INSTALL SCRIPT"
       sepurator
       sh "$RUN_INSTALL_SCRIPT"
-      echo ""
+
       sepurator
       touch "/.runnedInstall"
     fi
@@ -154,7 +156,6 @@ function create_folder_and_change_permissions {
 
 function run_prometheus_exporter() {
   if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
-    create_folder_and_change_permissions "/.config"
     create_folder_and_change_permissions "/var/log/"
 
     echo "* STARTING Prometheus Exporter for Borg Backup"
@@ -164,7 +165,7 @@ function run_prometheus_exporter() {
 
     echo "- Add Cronjob to Crontab"
     echo "$RUN_PROMETHEUS_EXPORTER su -c '/usr/local/bin/borg_exporter.sh 2>&1' -s /bin/bash borg" >> /tmp/cron_bkp
-    crontab /tmp/cron_bkp
+    crontab /tmp/cron_bkp > /dev/null 2>&1
     rm /tmp/cron_bkp
 
     if [ ! -f "/var/log/borg_exporter.prom" ]; then
@@ -173,29 +174,40 @@ function run_prometheus_exporter() {
     fi
 
     echo "- STARTING Node Exporter"
-    sudo -H -u "$USER" bash -c "node_exporter --collector.textfile.directory=$NODE_EXPORTER_DIR &"
+    sudo -H -u "$USER" bash -c "prometheus-node-exporter --collector.textfile.directory=$NODE_EXPORTER_DIR > /dev/null 2>&1 &"
     sepurator
   fi
 }
-##############################################################################################################################
+
+function run_correct_ssh_service() {
+  if [ -f "/etc/teleport.yaml" ]; then
+    echo "* STARTING Teleport Server"
+    exec teleport start -c /etc/teleport.yaml 2>&1
+  else
+    exec /usr/sbin/sshd -D -e "$@" 2>&1
+  fi;
+}
+#####################################################################################################
 # Main Code
-##############################################################################################################################
+#####################################################################################################
+set_environment_variables_if_not_empty
+dbus-uuidgen --ensure=/etc/machine-id
 add_borg_user
 
 print_container_info
 print_user_info
 sepurator
 make_and_import_ssh_keys
-sepurator
+
 generate_host_sshkey
 sepurator
 
 maintenance_enable
-set_timezone
+show_timezone_output
 run_prometheus_exporter
 run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
-echo ""
-exec /usr/sbin/sshd -D -e "$@" 2> /var/log/sshd.log
+
+run_correct_ssh_service

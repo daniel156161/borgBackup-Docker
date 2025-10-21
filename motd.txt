@@ -1,5 +1,0 @@
-Welcome to BorgBackup!
-
-You can run all borg command here: borg
-to Check you Version run: borg -V
-
