@@ -187,10 +187,16 @@ function run_correct_ssh_service() {
     exec /usr/sbin/sshd -D -e "$@" 2>&1
   fi;
 }
+
+function disable_pacman_sandbox() {
+  echo "NoSandbox" >> /etc/pacman.conf
+}
 #####################################################################################################
 # Main Code
 #####################################################################################################
 set_environment_variables_if_not_empty
+disable_pacman_sandbox
+
 dbus-uuidgen --ensure=/etc/machine-id
 add_borg_user
 
