@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source "/variables.sh"
+USER_GROUP="$USER"
 ###############################################################################
 # Funktionen
 ###############################################################################
@@ -35,18 +36,35 @@ function create_folder_and_change_permissions {
   if [ ! -d "$1" ]; then
     mkdir -p "$1"
   fi
-  chown -R "$USER":"$USER" "$1"
+  chown -R "$USER":"$USER_GROUP" "$1"
 }
 
 function add_borg_user {
   if ! id "$USER" >/dev/null 2>&1; then
-    groupadd -g "$GID" "$USER" >/dev/null
-    useradd -M -u "$UID" -g "$GID" -d / -s /bin/bash "$USER" >/dev/null
+    local group_name="$USER"
+    local existing_group
+    existing_group="$(getent group "$GID" | cut -d: -f1 || true)"
+    if [ -n "$existing_group" ]; then
+      group_name="$existing_group"
+    elif ! getent group "$USER" >/dev/null 2>&1; then
+      groupadd -g "$GID" "$USER" >/dev/null
+    fi
+    USER_GROUP="$group_name"
+
+    if getent passwd "$UID" >/dev/null 2>&1; then
+      existing_user="$(getent passwd "$UID" | cut -d: -f1)"
+      usermod -l "$USER" "$existing_user" >/dev/null 2>&1 || true
+      usermod -d / -s /bin/bash -g "$group_name" "$USER" >/dev/null
+    else
+      useradd -M -u "$UID" -g "$group_name" -d / -s /bin/bash "$USER" >/dev/null
+    fi
     printf "%s ALL=(ALL) NOPASSWD: ALL\n" "$USER" >> /etc/sudoers
 
     create_folder_and_change_permissions "/.config"
     create_folder_and_change_permissions "/.cache"
     chmod 700 "/.cache"
+  else
+    USER_GROUP="$(id -gn "$USER")"
   fi
 
   random_pw="$(dd if=/dev/urandom bs=18 count=1 2>/dev/null | base64)"
@@ -81,7 +99,7 @@ function make_and_import_ssh_keys {
   done
   shopt -u nullglob
 
-  chown -R "$USER":"$USER" "/.ssh"
+  chown -R "$USER":"$USER_GROUP" "/.ssh"
   chmod 700 "/.ssh"
   chmod 600 "/.ssh/authorized_keys"
 }
