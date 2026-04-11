@@ -1,3 +1,0 @@
-[submodule "package/teleport-bin"]
-	path = package/teleport-bin
-	url = git@git.yiprawr.dev:daniel156161/teleport-bin.git

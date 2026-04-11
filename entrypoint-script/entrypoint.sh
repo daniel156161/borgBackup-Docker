@@ -1,16 +1,18 @@
 #!/bin/bash
+set -euo pipefail
+
 source "/variables.sh"
-#####################################################################################################
+###############################################################################
 # Funktionen
-#####################################################################################################
+###############################################################################
 function set_environment_variables_if_not_empty {
   # Set Tmux Shell for .bashrc to load tmux and attach session if exists else create new session
-  if [ "$USE_TMUX_SHELL" != "" ]; then
+  if [ -n "${USE_TMUX_SHELL:-}" ]; then
     echo "USE_TMUX_SHELL=$USE_TMUX_SHELL" >> /etc/environment
   fi
 
   # Set Server Timezone
-  if [ "$TZ" != "" ]; then
+  if [ -n "${TZ:-}" ]; then
     echo "TZ=$TZ" >> /etc/environment
     ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
   fi
@@ -29,52 +31,55 @@ function print_user_info {
   echo "* GROUP: $USER - GID: $GID"
 }
 
+function create_folder_and_change_permissions {
+  if [ ! -d "$1" ]; then
+    mkdir -p "$1"
+  fi
+  chown -R "$USER":"$USER" "$1"
+}
+
 function add_borg_user {
-  if ! id "$USER" &>/dev/null; then
-    groupadd -g "$GID" "$USER" >> /dev/null
-    useradd -r -u "$UID" -g "$GID" -s "/bin/bash" "$USER" >> /dev/null
-    passwd -d "$USER" >> /dev/null
-    printf "$USER ALL=(ALL) NOPASSWD: ALL\n" | tee -a /etc/sudoers >> /dev/null
-    usermod -d / borg >> /dev/null
+  if ! id "$USER" >/dev/null 2>&1; then
+    groupadd -g "$GID" "$USER" >/dev/null
+    useradd -M -u "$UID" -g "$GID" -d / -s /bin/bash "$USER" >/dev/null
+    printf "%s ALL=(ALL) NOPASSWD: ALL\n" "$USER" >> /etc/sudoers
 
     create_folder_and_change_permissions "/.config"
     create_folder_and_change_permissions "/.cache"
     chmod 700 "/.cache"
   fi
+
+  random_pw="$(dd if=/dev/urandom bs=18 count=1 2>/dev/null | base64)"
+  echo "${USER}:${random_pw}" | chpasswd >/dev/null 2>&1 || true
 }
 
 function make_and_import_ssh_keys {
   local create_folders="0"
 
-  if [ ! -f "/.ssh/authorized_keys" ]; then
-    touch "/.ssh/authorized_keys"
-  else
-    rm "/.ssh/authorized_keys"
-    touch "/.ssh/authorized_keys"
-  fi
+  mkdir -p "/.ssh"
+  : > "/.ssh/authorized_keys"
 
-  for key in ${SSH_FOLDERS[@]}; do
-    if [ ! -d "${key}" ]; then
-      mkdir -p "${key}"
-      echo "Created ${key}"
+  for key_dir in "${SSH_FOLDERS[@]}"; do
+    if [ ! -d "$key_dir" ]; then
+      mkdir -p "$key_dir"
+      echo "Created $key_dir"
       create_folders="1"
     fi
   done
 
-  #chown -R "$USER":"$USER" "/sshkeys"
-
-  if [ $create_folders == "1" ]; then
+  if [ "$create_folders" = "1" ]; then
     sepurator
   fi
 
   echo "* IMPORT SSH KEYS"
 
-  FILES=$(ls -1 /sshkeys/clients)
-  for key in $FILES; do
-    echo "-  Adding SSH-Key $key"
-    cat "/sshkeys/clients/$key" >> "/.ssh/authorized_keys"
+  shopt -s nullglob
+  for key in /sshkeys/clients/*; do
+    echo "-  Adding SSH-Key $(basename "$key")"
+    cat "$key" >> "/.ssh/authorized_keys"
     echo "" >> "/.ssh/authorized_keys"
   done
+  shopt -u nullglob
 
   chown -R "$USER":"$USER" "/.ssh"
   chmod 700 "/.ssh"
@@ -89,26 +94,30 @@ function print_message {
 
 function generate_host_sshkey {
   # Generate SSH-Keys
+  mkdir -p /sshkeys/host
+
   if [ ! -f "/sshkeys/host/ssh_host_rsa_key" ]; then
     sepurator
     print_message "HOST SSH-KEY RSA not found, generating..."
-    ssh-keygen -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
+    ssh-keygen -q -t rsa -b 4096 -f "/sshkeys/host/ssh_host_rsa_key" -N ""
     print_message "HOST SSH-KEY RSA Generated"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ecdsa_key" ]; then
     sepurator
     print_message "HOST SSH-KEY ECDSA not found, generating..."
-    ssh-keygen -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
+    ssh-keygen -q -t ecdsa -b 521 -f "/sshkeys/host/ssh_host_ecdsa_key" -N ""
     print_message "HOST SSH-KEY ECDSA Generated"
   fi
   if [ ! -f "/sshkeys/host/ssh_host_ed25519_key" ]; then
     sepurator
     print_message "HOST SSH-KEY ED25519 not found, generating..."
-    ssh-keygen -t ed25519 -b 521 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
+    ssh-keygen -q -t ed25519 -f "/sshkeys/host/ssh_host_ed25519_key" -N ""
     print_message "HOST SSH-KEY ED25519 Generated"
   fi
 
-  chown -R "$USER":"$USER" "/sshkeys/host"
+  chmod 600 /sshkeys/host/ssh_host_*_key
+  chmod 644 /sshkeys/host/ssh_host_*_key.pub
+  chown root:root /sshkeys/host/ssh_host_* || true
 }
 
 function maintenance_enable {
@@ -116,7 +125,7 @@ function maintenance_enable {
     echo "* MAINTENANCE MODE - ENABLED"
     if [ -f "/crontab.txt" ]; then
       crontab "/crontab.txt"
-      crond -i 2> /dev/null
+      crond
       echo "- Crontab loaded successfully"
     else
       echo "- Can not find /crontab.txt"
@@ -126,7 +135,7 @@ function maintenance_enable {
 }
 
 function show_timezone_output {
-  if [ "$TZ" != "" ]; then
+  if [ -n "${TZ:-}" ]; then
     echo "* Setting Timezone to $TZ"
   else
     echo "* Timezone not set - Use UTC Time"
@@ -135,37 +144,26 @@ function show_timezone_output {
 }
 
 function run_install_script {
-  if [ "$RUN_INSTALL_SCRIPT" != "false" ]; then
-    if [ ! -f "/.runnedInstall" ]; then
-      echo "* RUNNING INSTALL SCRIPT"
-      sepurator
-      sh "$RUN_INSTALL_SCRIPT"
-
-      sepurator
-      touch "/.runnedInstall"
-    fi
+  if [ "$RUN_INSTALL_SCRIPT" != "false" ] && [ ! -f "/.runnedInstall" ]; then
+    echo "* RUNNING INSTALL SCRIPT"
+    sepurator
+    sh "$RUN_INSTALL_SCRIPT"
+    sepurator
+    touch "/.runnedInstall"
   fi
 }
 
-function create_folder_and_change_permissions {
-  if [ ! -d "$1" ]; then
-    mkdir -p "$1"
-  fi
-  chown -R "$USER":"$USER" "$1"
-}
-
-function run_prometheus_exporter() {
+function run_prometheus_exporter {
   if [ "$RUN_PROMETHEUS_EXPORTER" != "false" ]; then
     create_folder_and_change_permissions "/var/log/"
 
     echo "* STARTING Prometheus Exporter for Borg Backup"
 
-    crontab -l > /tmp/cron_bkp
+    crontab -l > /tmp/cron_bkp 2>/dev/null || true
     echo "" >> /tmp/cron_bkp
-
     echo "- Add Cronjob to Crontab"
     echo "$RUN_PROMETHEUS_EXPORTER su -c '/usr/local/bin/borg_exporter.sh 2>&1' -s /bin/bash borg" >> /tmp/cron_bkp
-    crontab /tmp/cron_bkp > /dev/null 2>&1
+    crontab /tmp/cron_bkp >/dev/null 2>&1
     rm /tmp/cron_bkp
 
     if [ ! -f "/var/log/borg_exporter.prom" ]; then
@@ -174,24 +172,22 @@ function run_prometheus_exporter() {
     fi
 
     echo "- STARTING Node Exporter"
-    sudo -H -u "$USER" bash -c "prometheus-node-exporter --collector.textfile.directory=$NODE_EXPORTER_DIR > /dev/null 2>&1 &"
+    if command -v prometheus-node-exporter >/dev/null 2>&1; then
+      sudo -H -u "$USER" bash -c "prometheus-node-exporter --collector.textfile.directory=$NODE_EXPORTER_DIR >/dev/null 2>&1 &"
+    elif command -v node_exporter >/dev/null 2>&1; then
+      sudo -H -u "$USER" bash -c "node_exporter --collector.textfile.directory=$NODE_EXPORTER_DIR >/dev/null 2>&1 &"
+    fi
+
+    if ! pgrep -x crond >/dev/null 2>&1; then
+      crond
+    fi
     sepurator
   fi
 }
-
-function run_correct_ssh_service() {
-  if [ -f "/etc/teleport.yaml" ]; then
-    echo "* STARTING Teleport Server"
-    exec teleport start -c /etc/teleport.yaml 2>&1
-  else
-    exec /usr/sbin/sshd -D -e "$@" 2>&1
-  fi;
-}
-#####################################################################################################
+###############################################################################
 # Main Code
-#####################################################################################################
+###############################################################################
 set_environment_variables_if_not_empty
-dbus-uuidgen --ensure=/etc/machine-id
 add_borg_user
 
 print_container_info
@@ -209,5 +205,4 @@ run_install_script
 
 echo "* Init done! - Starting SSH-Daemon..."
 sepurator
-
-run_correct_ssh_service
+exec /usr/sbin/sshd -D -e "$@" 2>&1
