@@ -10,7 +10,7 @@ ENV RUN_PROMETHEUS_EXPORTER="false"
 ENV TZ=""
 
 RUN apk add --no-cache \
-  bash sudo openssh-server shadow tzdata curl git dcron coreutils grep sed gawk util-linux ca-certificates tmux prometheus-node-exporter \
+  bash sudo openssh-server shadow tzdata curl git dcron coreutils grep sed gawk util-linux ca-certificates tmux fastfetch prometheus-node-exporter \
   borgbackup \
 && mkdir -p \
   /.ssh \
