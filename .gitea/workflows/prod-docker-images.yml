@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - alpine
   workflow_dispatch:
 
 jobs:
@@ -14,26 +15,49 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # --- Logins ---
+      - name: Login to Gitea Registry
+        if: ${{ github.ref == 'refs/heads/alpine' }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY_URL }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.ACTION_ACCESS_TOKEN }}
+
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # ---------------- BRANCH BUILD (main) ----------------
-      # On Branch: Gitea and Docker Hub :latest
-      - name: Build & push (branch -> only :latest everywhere)
-        if: ${{ github.ref_type == 'branch' && github.ref == 'refs/heads/main' }}
-        uses: docker/build-push-action@v6
+      # On Branch main: Docker Hub :latest
+      # On Branch alpine: Gitea :alpine
+      - name: Repo owner to lowercase
+        run: echo "REPO_OWNER_LC=$(echo '${{ gitea.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build and push main image to Docker Hub
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/borgbackup-ssh:latest
+
+      - name: Build and push Alpine image to Gitea
+        if: ${{ github.ref == 'refs/heads/alpine' }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ vars.DOCKER_REGISTRY_URL }}/${{ env.REPO_OWNER_LC }}/borgbackup-ssh:alpine
