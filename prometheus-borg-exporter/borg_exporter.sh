@@ -3,11 +3,6 @@ source /etc/borg_exporter.rc
 source /variables.sh
 
 TMP_FILE="/tmp/prometheus-borg"
-DATEDIFF=`which datediff`
-if [ -z "$DATEDIFF" ]; then
-    #ubuntu packages have a different executable name
-    DATEDIFF=`which dateutils.ddiff`
-fi
 
 [ -e $TMP_FILE ] && rm -f $TMP_FILE
 
@@ -48,6 +43,20 @@ function calc_bytes {
             echo $NUM | awk '{ print $1 }'
             ;;
     esac
+}
+
+function calc_hours_diff {
+    local start_ts="$1"
+    local end_ts="$2"
+
+    python3 - "$start_ts" "$end_ts" <<'PY'
+from datetime import datetime
+import sys
+
+start = datetime.strptime(sys.argv[1], "%Y-%m-%d %H:%M:%S")
+end = datetime.strptime(sys.argv[2], "%Y-%m-%d %H:%M:%S")
+print(int((end - start).total_seconds() // 3600))
+PY
 }
 
 function writeDefinitionsToMetrics() {
@@ -101,7 +110,7 @@ function getBorgDataForRepository {
     if [ -n "${LAST_ARCHIVE}" ]; then
         LAST_ARCHIVE_DATE=$(echo $LAST_ARCHIVE | awk '{print $3" "$4}')
         CURRENT_DATE="$(date '+%Y-%m-%d %H:%M:%S')"
-        NB_HOUR_FROM_LAST_BCK=$($DATEDIFF "$LAST_ARCHIVE_DATE" "$CURRENT_DATE" -f '%H')
+        NB_HOUR_FROM_LAST_BCK="$(calc_hours_diff "$LAST_ARCHIVE_DATE" "$CURRENT_DATE")"
 
         # in case the date parsing from BORG didn't work (e.g. archive with space in it), datediff will output
         # a usage message on stdout and will break prometheus formatting. We need to
