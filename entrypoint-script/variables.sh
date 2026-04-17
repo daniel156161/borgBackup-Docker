@@ -2,7 +2,7 @@ DOCKER_IMAGE_VERSION="3.0.0"
 BORG_VERSION=$(borg -V)
 SSH_FOLDERS=( "/sshkeys/clients" "/sshkeys/host" )
 NODE_EXPORTER_DIR="/var/log"
-COLUMNS="86"
+DEFAULT_COLUMNS="86"
 ###############################################################################
 # Funktionen
 ###############################################################################
@@ -11,7 +11,7 @@ function sepurator {
     local end="$2"
   else
     local end
-    end=$(tput cols 2>/dev/null || echo "${COLUMNS:-80}")
+    end=$(tput cols 2>/dev/null || echo "${COLUMNS:-${DEFAULT_COLUMNS:-80}}")
   fi
 
   local start=1
