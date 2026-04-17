@@ -10,7 +10,8 @@ function sepurator {
   if [ -n "${2:-}" ]; then
     local end="$2"
   else
-    local end="$COLUMNS"
+    local end
+    end=$(tput cols 2>/dev/null || echo "${COLUMNS:-80}")
   fi
 
   local start=1

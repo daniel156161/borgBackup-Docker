@@ -11,7 +11,7 @@ ENV TZ=""
 
 RUN apk add --no-cache \
   bash sudo openssh-server shadow tzdata curl git dcron coreutils grep sed gawk util-linux ca-certificates tmux fastfetch prometheus-node-exporter \
-  borgbackup \
+  borgbackup docker-cli \
 && mkdir -p \
   /.ssh \
   /backups \
