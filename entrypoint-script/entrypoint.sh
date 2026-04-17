@@ -9,12 +9,12 @@ USER_GROUP="$USER"
 function set_environment_variables_if_not_empty {
   # Set Tmux Shell for .bashrc to load tmux and attach session if exists else create new session
   if [ -n "${USE_TMUX_SHELL:-}" ]; then
-    echo "USE_TMUX_SHELL=$USE_TMUX_SHELL" >> /etc/environment
+    grep -q "^USE_TMUX_SHELL=" /etc/environment || echo "USE_TMUX_SHELL=$USE_TMUX_SHELL" >> /etc/environment
   fi
 
   # Set Server Timezone
   if [ -n "${TZ:-}" ]; then
-    echo "TZ=$TZ" >> /etc/environment
+    grep -q "^TZ=" /etc/environment || echo "TZ=$TZ" >> /etc/environment
     ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
   fi
 }
