@@ -16,6 +16,7 @@ PubkeyAuthentication yes
 AuthenticationMethods publickey
 PermitEmptyPasswords no
 AuthorizedKeysFile .ssh/authorized_keys
+PermitUserEnvironment yes
 StrictModes yes
 AllowUsers borg
 
