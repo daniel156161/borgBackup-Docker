@@ -91,10 +91,12 @@ function add_docker_socket_permission {
 
   local server_api
   server_api="$(curl -sf --unix-socket /var/run/docker.sock http://localhost/version 2>/dev/null \
-    | grep -o '"ApiVersion":"[^"]*"' | cut -d'"' -f4 || true)"
+    | grep -o '"ApiVersion":"[^"]*"' | cut -d'"' -f4 | tr -d '[:space:]' || true)"
   if [ -n "$server_api" ]; then
     printf 'export DOCKER_API_VERSION="%s"\n' "$server_api" > /etc/profile.d/docker_api_version.sh
     printf 'DOCKER_API_VERSION=%s\n' "$server_api" > "/.ssh/environment"
+    sed -i '/^DOCKER_API_VERSION=/d' /etc/environment
+    printf 'DOCKER_API_VERSION=%s\n' "$server_api" >> /etc/environment
     export DOCKER_API_VERSION="$server_api"
     echo "* Docker API version pinned to $server_api"
   fi
