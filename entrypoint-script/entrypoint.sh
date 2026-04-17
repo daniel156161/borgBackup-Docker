@@ -71,6 +71,25 @@ function add_borg_user {
   echo "${USER}:${random_pw}" | chpasswd >/dev/null 2>&1 || true
 }
 
+function add_docker_socket_permission {
+  if [ ! -S /var/run/docker.sock ]; then
+    return
+  fi
+
+  local sock_gid
+  sock_gid="$(stat -c '%g' /var/run/docker.sock)"
+  local group_name
+  group_name="$(getent group "$sock_gid" | cut -d: -f1 || true)"
+
+  if [ -z "$group_name" ]; then
+    groupadd -g "$sock_gid" docker
+    group_name="docker"
+  fi
+
+  usermod -aG "$group_name" "$USER"
+  echo "* Docker socket access granted ($group_name GID=$sock_gid)"
+}
+
 function make_and_import_ssh_keys {
   local create_folders="0"
 
@@ -94,8 +113,8 @@ function make_and_import_ssh_keys {
   shopt -s nullglob
   for key in /sshkeys/clients/*; do
     echo "-  Adding SSH-Key $(basename "$key")"
-    cat "$key" >> "/.ssh/authorized_keys"
-    echo "" >> "/.ssh/authorized_keys"
+    awk 'NF' "$key" >> "/.ssh/authorized_keys"
+    printf '\n' >> "/.ssh/authorized_keys"
   done
   shopt -u nullglob
 
@@ -207,6 +226,7 @@ function run_prometheus_exporter {
 ###############################################################################
 set_environment_variables_if_not_empty
 add_borg_user
+add_docker_socket_permission
 
 print_container_info
 print_user_info
