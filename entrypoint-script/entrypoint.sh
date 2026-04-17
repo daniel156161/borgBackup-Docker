@@ -88,6 +88,15 @@ function add_docker_socket_permission {
 
   usermod -aG "$group_name" "$USER"
   echo "* Docker socket access granted ($group_name GID=$sock_gid)"
+
+  local server_api
+  server_api="$(curl -sf --unix-socket /var/run/docker.sock http://localhost/version 2>/dev/null \
+    | grep -o '"ApiVersion":"[^"]*"' | cut -d'"' -f4 || true)"
+  if [ -n "$server_api" ]; then
+    echo "DOCKER_API_VERSION=$server_api" >> /etc/environment
+    export DOCKER_API_VERSION="$server_api"
+    echo "* Docker API version pinned to $server_api"
+  fi
 }
 
 function make_and_import_ssh_keys {
