@@ -2,17 +2,17 @@
 source /etc/borg_exporter.rc
 source /variables.sh
 
-TMP_FILE="/tmp/prometheus-borg"
+TMP_FILE="/tmp/prometheus-borg.$$"
 
-[ -e $TMP_FILE ] && rm -f $TMP_FILE
+[ -e "$TMP_FILE" ] && rm -f "$TMP_FILE"
 
 #prevent "Attempting to access a previously unknown unencrypted repository" prompt
 export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
 export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 HOSTNAME=$(hostname)
-##############################################################################################################################
+###################################################################################################
 # Funktionen
-##############################################################################################################################
+###################################################################################################
 function writeToFile() {
     msg="$1"
     local -n arr=$2
@@ -191,13 +191,18 @@ function findRepositorysAndGetData() {
 }
 
 function sendDataToGatewayOrNodeExplorer() {
+    if ! grep -q '^borg_' "$TMP_FILE"; then
+        echo "No borg metric data collected; keeping previous metrics output untouched."
+        return 1
+    fi
+
     if [ -n "${PUSHGATEWAY_URL}" ]; then
         #send data via pushgateway
-        cat $TMP_FILE | curl --data-binary @- ${PUSHGATEWAY_URL}/metrics/job/borg-exporter/host/$HOSTNAME/repository/$REPOSITORY
+        curl --data-binary @"$TMP_FILE" "${PUSHGATEWAY_URL}/metrics/job/borg-exporter/host/$HOSTNAME/repository/${REPOSITORY:-auto}"
     else
         #send data via node_exporter
         if [ -d "${NODE_EXPORTER_DIR}" ]; then
-            cp $TMP_FILE ${NODE_EXPORTER_DIR}/borg_exporter.prom
+            cp "$TMP_FILE" "${NODE_EXPORTER_DIR}/borg_exporter.prom"
         else
             echo "Please configure either PUSHGATEWAY_URL or NODE_EXPORTER_DIR in /etc/borg_exporter.rc"
         fi
@@ -205,12 +210,12 @@ function sendDataToGatewayOrNodeExplorer() {
 }
 
 function cleanup() {
-    rm -f $TMP_FILE
+    rm -f "$TMP_FILE"
 }
 
-##############################################################################################################################
+###################################################################################################
 # Main Code
-##############################################################################################################################
+###################################################################################################
 writeDefinitionsToMetrics
 if [ -n "${REPOSITORY}" ]; then
     getBorgDataForRepository "${REPOSITORY}" "${HOSTNAME}"
