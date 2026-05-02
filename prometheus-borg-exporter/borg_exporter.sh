@@ -191,8 +191,8 @@ function findRepositorysAndGetData() {
 }
 
 function sendDataToGatewayOrNodeExplorer() {
-    if ! grep -q '^borg_' "$TMP_FILE"; then
-        echo "No borg metric data collected; keeping previous metrics output untouched."
+    if ! grep -qE '^borg_[a-zA-Z_]+\{[^}]+\} [0-9]' "$TMP_FILE"; then
+        echo "No valid borg metric data collected; keeping previous metrics output untouched."
         return 1
     fi
 
@@ -202,7 +202,7 @@ function sendDataToGatewayOrNodeExplorer() {
     else
         #send data via node_exporter
         if [ -d "${NODE_EXPORTER_DIR}" ]; then
-            cp "$TMP_FILE" "${NODE_EXPORTER_DIR}/borg_exporter.prom"
+            mv "$TMP_FILE" "${NODE_EXPORTER_DIR}/borg_exporter.prom"
         else
             echo "Please configure either PUSHGATEWAY_URL or NODE_EXPORTER_DIR in /etc/borg_exporter.rc"
         fi
