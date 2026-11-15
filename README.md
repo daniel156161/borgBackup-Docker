@@ -50,6 +50,23 @@ PUSHGATEWAY_URL=""
 BASEREPODIR="/backups"
 ```
 
+### Dashboard sizes and current values
+Import `prometheus-borg-exporter/updated_borg_backup_status_dashboard.json`
+into Grafana after updating the exporter. Summary panels use instant Prometheus
+queries, not averages over the dashboard time range, so they show the latest
+scraped repository statistics.
+
+Borg's default `kB`, `MB`, `GB` and `TB` units are decimal. The exporter converts
+these using powers of 1000; explicit `KiB`, `MiB`, `GiB` and `TiB` units use 1024.
+Grafana uses decimal bytes to match Borg (for example, `8.63 TB` stays `8.63 TB`).
+Sizes are parsed from Borg's rounded text output, so small rounding differences
+from exact byte counts are expected. The backup-server summary sums all repos;
+compare a single repository against its matching host section. Values update only
+after the exporter runs and Prometheus scrapes the new metrics. Historical samples
+collected before this fix are not rewritten.
+
+Run the regression tests with `python3 -m unittest discover -s tests -v`.
+
 ## borgbackup Version into Tags
 
 | TAG | Borg Backup Version | Alpine Version |

@@ -1,15 +1,4 @@
 #!/bin/bash
-source /etc/borg_exporter.rc
-source /variables.sh
-
-TMP_FILE="/tmp/prometheus-borg.$$"
-
-[ -e "$TMP_FILE" ] && rm -f "$TMP_FILE"
-
-#prevent "Attempting to access a previously unknown unencrypted repository" prompt
-export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
-export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
-HOSTNAME=$(hostname)
 ###################################################################################################
 # Funktionen
 ###################################################################################################
@@ -23,26 +12,25 @@ function writeToFile() {
 }
 
 function calc_bytes {
-    NUM=$1
-    UNIT=$2
+    local num="$1" unit="$2" factor
 
-    case "$UNIT" in
-        kB)
-            echo $NUM | awk '{ print $1 * 1024 }'
-            ;;
-        MB)
-            echo $NUM | awk '{ print $1 * 1024 * 1024 }'
-            ;;
-        GB)
-            echo $NUM | awk '{ print $1 * 1024 * 1024 * 1024 }'
-            ;;
-        TB)
-            echo $NUM | awk '{ print $1 * 1024 * 1024 * 1024 * 1024 }'
-            ;;
-        B)
-            echo $NUM | awk '{ print $1 }'
-            ;;
+    # Borg's default human-readable units are decimal (TB = 10^12 bytes).
+    # Only explicitly binary units such as TiB use powers of 1024.
+    case "$unit" in
+        B)   factor=1 ;;
+        kB)  factor=1000 ;;
+        MB)  factor=1000000 ;;
+        GB)  factor=1000000000 ;;
+        TB)  factor=1000000000000 ;;
+        PB)  factor=1000000000000000 ;;
+        KiB) factor=1024 ;;
+        MiB) factor=1048576 ;;
+        GiB) factor=1073741824 ;;
+        TiB) factor=1099511627776 ;;
+        PiB) factor=1125899906842624 ;;
+        *) echo "Unsupported Borg size unit: $unit" >&2; return 1 ;;
     esac
+    LC_ALL=C awk -v num="$num" -v factor="$factor" 'BEGIN { printf "%.0f\n", num * factor }'
 }
 
 function calc_hours_diff {
@@ -216,6 +204,18 @@ function cleanup() {
 ###################################################################################################
 # Main Code
 ###################################################################################################
+function main() {
+source /etc/borg_exporter.rc
+source /variables.sh
+
+TMP_FILE="/tmp/prometheus-borg.$$"
+[ -e "$TMP_FILE" ] && rm -f "$TMP_FILE"
+
+# Prevent prompts when collecting metrics unattended.
+export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+HOSTNAME=$(hostname)
+
 writeDefinitionsToMetrics
 if [ -n "${REPOSITORY}" ]; then
     getBorgDataForRepository "${REPOSITORY}" "${HOSTNAME}"
@@ -238,3 +238,8 @@ fi
 
 sendDataToGatewayOrNodeExplorer
 cleanup
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi
